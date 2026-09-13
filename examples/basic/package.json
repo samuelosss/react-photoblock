@@ -1,0 +1,26 @@
+{
+  "name": "react-photoblock-example-basic",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Minimal consumer app: imports the BUILT react-photoblock package, supplies in-memory fakes for the four PhotoApi functions, and passes no googlePhotos adapter. Proves the package renders correctly with zero CSS setup and zero Google configuration.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-photoblock": "file:../.."
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
