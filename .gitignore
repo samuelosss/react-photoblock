@@ -1,0 +1,16 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+playwright-report/
+test-results/
+.DS_Store
+*.local
+
+# Never commit real Google OAuth credentials — see docs/google-photos-setup.md.
+.env
+.env.*
+!.env.example
+
+examples/*/node_modules/
+examples/*/dist/
