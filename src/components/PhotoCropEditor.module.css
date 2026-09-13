@@ -1,0 +1,241 @@
+/**
+ * Every custom property below has a fallback baked into its own var()
+ * call, so this renders correctly with zero theme setup. See the package
+ * README's "Theming" section for the full token list and what each one
+ * controls — override any subset by setting these properties on an
+ * ancestor element (or `:root`).
+ */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--pb-scrim, rgba(0, 0, 0, 0.65));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--pb-space-2, 8px);
+  z-index: 1000;
+}
+
+.dialog {
+  background: var(--pb-surface, #ffffff);
+  border-radius: var(--pb-radius, 8px);
+  padding: var(--pb-space-3, 16px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pb-space-2, 8px);
+  max-width: min(90vw, 720px);
+  width: 100%;
+}
+
+.stage {
+  /* width/height are set INLINE (see PhotoCropEditor.tsx's `stageBox`,
+     from cropMath.ts's containBox()), sized to the image's (or, once
+     rotated, the rotated image's) own aspect ratio — never a fixed ratio.
+     That is the fix for the crop rect's percentage-based positioning not
+     matching the same percentage of the actual image: the two only agree
+     when this box IS the image's displayed box, with zero letterbox gap.
+
+     This element must NOT have overflow:hidden. The crop rect's corner
+     handles sit HALF OUTSIDE this box at the default full-frame crop, by
+     design — a corner must stay grabbable even when cropping flush to an
+     image edge. Clipping .stage itself clips the handles' hit-testable
+     area away in a real browser (a unit-test suite running on JSDOM
+     cannot catch this: JSDOM's synthetic events dispatch directly on a
+     target regardless of visual clipping, so this only shows up under a
+     real layout engine — see e2e/photo-crop-editor.spec.ts and the
+     README's Limitations section for what is and isn't covered). The
+     clipping instead lives on .imageClip and .dimClip below, both of
+     which deliberately exclude the crop rect and its handles. */
+  position: relative;
+  margin: 0 auto;
+  background: var(--pb-stage-bg, #111111);
+  border-radius: 8px;
+  touch-action: none;
+}
+
+/* Clips ONLY the image (and gives it the stage's rounded corners) —
+   see .stage's comment for why this can't be on .stage itself. */
+.imageClip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+/**
+ * The dimming shadow lives on its OWN clipped layer, separate from
+ * .cropRect below — not the same element, and not an ancestor of it.
+ * .cropRect stays unclipped, as a direct child of .stage, so its corner
+ * handles stay hit-testable (see .stage's comment: clipping anything
+ * that CONTAINS the handles breaks dragging them).
+ *
+ * .dimRect (the actual box-shadow) is a CHILD of this clipped,
+ * pointer-events:none layer, positioned with the exact same
+ * left/top/width/height as .cropRect (PhotoCropEditor.tsx computes both
+ * from one shared style object) — so visually the dimming still tracks
+ * the crop rect precisely, but the 1000px shadow spread is clipped to
+ * .stage's own bounds (this layer is inset:0 of .stage, same as
+ * .imageClip), instead of painting over the whole dialog the way an
+ * unclipped sibling of .stage would.
+ *
+ * Paint order matters here: .dimClip comes BEFORE .cropRect in the DOM
+ * and neither carries a z-index, so .cropRect paints and hit-tests ABOVE
+ * this layer. That ordering — not pointer-events:none — is what actually
+ * keeps the handles grabbable. pointer-events:none is the belt to that
+ * braces: if this layer ever gets a z-index for any reason, it is the
+ * only thing that would still stop this purely decorative layer from
+ * swallowing a drag on a handle. Keep the split — merging .dimClip and
+ * .cropRect back into one element, or clipping .stage directly to
+ * contain the shadow, reintroduces the exact hit-testing bug this
+ * structure exists to avoid.
+ */
+.dimClip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.dimRect {
+  position: absolute;
+  box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.45);
+}
+
+.image {
+  /* width/height are set INLINE to `imageRenderSize` (its own UNROTATED
+     size, chosen so that rotating it around its own center produces a
+     bounding box exactly equal to .stage) — position:absolute + the
+     translate(-50%,-50%) half of the inline transform centers it there;
+     the rotate() half is appended after by the component.
+
+     max-width/max-height MUST be reset here. Many app stylesheets set a
+     blanket `img { max-width: 100% }` (a common reset to keep images
+     from overflowing their container), and CSS resolves used width as
+     min(specified width, max-width) — an inline `width` CANNOT override
+     a `max-width` from anywhere, including a lower-specificity element
+     selector. Left unreset, a host app's own image reset silently
+     reintroduces the exact letterbox bug containBox()/imageRenderSize
+     exist to eliminate, for any source rotated to 90°/270° whose
+     ROTATED shape is taller than wide (i.e. any LANDSCAPE source, since
+     rotating swaps its dimensions to portrait) — the normal case, since
+     rotating a landscape photo is what the rotate button is for. At
+     90°/270°, imageRenderSize.width is set to stageBox.height so that
+     rotating the element restores stageBox's own shape (see the
+     component's comment) — but stageBox.height is LARGER than
+     stageBox.width exactly when the rotated shape is portrait, so this
+     inline width EXCEEDS 100% of .stage's own width (the containing
+     block for this absolutely positioned element) and would get clamped
+     down to it by an inherited max-width, while the inline height
+     (unaffected — a typical reset sets no max-height) stays
+     uncompressed: the image would squash horizontally and drift
+     off-center inside .stage. This reset is why that never happens. */
+  max-width: none;
+  max-height: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cropRect {
+  /* No box-shadow here — the dimming is painted by the separate, clipped
+     .dimRect above; this element stays unclipped so its corner handles
+     remain hit-testable half outside the box at the default full-frame
+     crop. See .dimClip's comment for the split. */
+  position: absolute;
+  border: 2px solid var(--pb-accent, #e8622c);
+  cursor: move;
+  touch-action: none;
+}
+
+.handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: var(--pb-accent, #e8622c);
+  border: 2px solid var(--pb-on-overlay, #ffffff);
+  border-radius: 50%;
+  touch-action: none;
+}
+
+.handle-nw {
+  top: -10px;
+  left: -10px;
+  cursor: nwse-resize;
+}
+
+.handle-ne {
+  top: -10px;
+  right: -10px;
+  cursor: nesw-resize;
+}
+
+.handle-se {
+  bottom: -10px;
+  right: -10px;
+  cursor: nwse-resize;
+}
+
+.handle-sw {
+  bottom: -10px;
+  left: -10px;
+  cursor: nesw-resize;
+}
+
+.hint {
+  font-size: var(--pb-font-size-sm, 0.875rem);
+  color: var(--pb-text-muted, #6b7280);
+  margin: 0;
+}
+
+.error {
+  font-size: var(--pb-font-size-sm, 0.875rem);
+  color: var(--pb-danger, #b3261e);
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pb-space-2, 8px);
+}
+
+.rotateGroup,
+.mainGroup {
+  display: flex;
+  gap: var(--pb-space-2, 8px);
+}
+
+.rotateGroup button,
+.mainGroup button {
+  border-radius: var(--pb-radius, 8px);
+  padding: 0.5rem 1rem;
+  font-size: var(--pb-font-size-sm, 0.875rem);
+  font-weight: var(--pb-font-weight-accent, 600);
+  cursor: pointer;
+  border: 1px solid var(--pb-border, #d8dbe0);
+  background: var(--pb-surface, #ffffff);
+  color: var(--pb-text, #1a1a1a);
+  min-height: 2.5rem;
+}
+
+.rotateGroup button:disabled,
+.mainGroup button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cancelButton {
+  background: none;
+}
+
+.saveButton {
+  background: var(--pb-success, #2f9e44);
+  border-color: var(--pb-success, #2f9e44);
+  color: var(--pb-on-overlay, #ffffff);
+}
