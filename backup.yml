@@ -1,0 +1,5 @@
+project: react-photoblock
+class: own
+database: none
+paths: []
+note: component library (src, dist, examples, e2e); no runtime data; git is the backup
