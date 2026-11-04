@@ -4,11 +4,21 @@
   "description": "A dependency-injected React media authoring block: photo and video upload with progress, one combined drag/keyboard-reorderable gallery, click-to-crop, a transcode-status poll, and an optional Google Photos picker. It uploads and orders; your server transcodes. Zero runtime dependencies beyond React.",
   "type": "module",
   "license": "MIT",
+  "author": "samuelosss",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samuelosss/react-photoblock.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samuelosss/react-photoblock/issues"
+  },
+  "homepage": "https://github.com/samuelosss/react-photoblock#readme",
   "sideEffects": [
     "**/*.css"
   ],
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md"
   ],
   "main": "./dist/react-mediablock.cjs",
   "module": "./dist/react-mediablock.js",
