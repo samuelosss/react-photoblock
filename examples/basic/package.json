@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Minimal consumer app: imports the BUILT react-photoblock package, supplies in-memory fakes for the four PhotoApi functions, and passes no googlePhotos adapter. Proves the package renders correctly with zero CSS setup and zero Google configuration.",
+  "description": "Minimal consumer app: imports the BUILT react-photoblock package, supplies in-memory fakes for the PhotoApi and VideoApi functions including a faked transcode lifecycle, and passes no googlePhotos adapter. Proves the package renders correctly with zero CSS setup and zero Google configuration.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

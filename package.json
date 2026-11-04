@@ -1,7 +1,7 @@
 {
   "name": "react-photoblock",
-  "version": "0.1.0",
-  "description": "A dependency-injected React photo uploader and crop editor: multi-photo upload with progress, drag/keyboard reorder, click-to-crop, and an optional Google Photos picker adapter. Zero runtime dependencies beyond React.",
+  "version": "0.2.0",
+  "description": "A dependency-injected React media authoring block: photo and video upload with progress, one combined drag/keyboard-reorderable gallery, click-to-crop, a transcode-status poll, and an optional Google Photos picker. It uploads and orders; your server transcodes. Zero runtime dependencies beyond React.",
   "type": "module",
   "license": "MIT",
   "sideEffects": [
@@ -59,8 +59,11 @@
   "keywords": [
     "react",
     "photo-upload",
+    "video-upload",
+    "media-gallery",
     "image-crop",
     "crop-editor",
+    "reorder",
     "google-photos",
     "dependency-injection"
   ]
