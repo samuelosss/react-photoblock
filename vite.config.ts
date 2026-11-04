@@ -15,15 +15,15 @@ export default defineConfig({
     react(),
     dts({
       insertTypesEntry: true,
-      rollupTypes: false,
+      rollupTypes: true,
       tsconfigPath: './tsconfig.build.json',
     }),
   ],
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
-      name: 'ReactPhotoblock',
-      fileName: (format) => (format === 'es' ? 'react-photoblock.js' : 'react-photoblock.cjs'),
+      name: 'ReactMediablock',
+      fileName: (format) => (format === 'es' ? 'react-mediablock.js' : 'react-mediablock.cjs'),
       formats: ['es', 'cjs'],
     },
     cssCodeSplit: false,
@@ -41,7 +41,7 @@ export default defineConfig({
         // Names the emitted CSS file predictably (Vite's library-mode
         // default is a generic `style.css`) so package.json's
         // "./styles.css" export subpath has a stable target.
-        assetFileNames: 'react-photoblock.[ext]',
+        assetFileNames: 'react-mediablock.[ext]',
       },
     },
   },

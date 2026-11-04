@@ -12,6 +12,8 @@ import {
 import type { Corner, CropRect, Rotation } from './cropMath';
 import { mergeLabels } from '../labels';
 import type { DeepPartial, PhotoCropEditorLabels } from '../labels';
+import { useResolvedImageSrc } from './LoadedImage';
+import type { LoadImage } from './LoadedImage';
 import styles from './PhotoCropEditor.module.css';
 
 export interface PhotoCropEditorProps {
@@ -22,6 +24,18 @@ export interface PhotoCropEditorProps {
   /** Receives the final cropped/rotated image as a Blob, ready to upload as-is. */
   onSave: (blob: Blob) => void;
   labels?: DeepPartial<PhotoCropEditorLabels>;
+  /**
+   * Optional: fetch the image's bytes yourself, for an endpoint an
+   * `<img src>` cannot reach on its own (a bearer-token route being the
+   * usual case) — see `LoadImage`'s own doc for the full reasoning,
+   * including why a `?token=` query parameter is not the alternative.
+   *
+   * Needed here as well as on MediaUploader because the image being
+   * cropped is either a saved photo (a server URL that may need the
+   * header) or a queued one previewed from a local blob. Local previews
+   * are never routed through it.
+   */
+  loadImage?: LoadImage;
 }
 
 type DragMode = { type: 'move' } | { type: 'resize'; corner: Corner };
@@ -152,8 +166,14 @@ function capOutputSize(width: number, height: number, maxDimension: number): { w
   return { width: Math.round(width * scale), height: Math.round(height * scale) };
 }
 
-export function PhotoCropEditor({ imageUrl, saving, onCancel, onSave, labels }: PhotoCropEditorProps) {
+export function PhotoCropEditor({ imageUrl, saving, onCancel, onSave, labels, loadImage }: PhotoCropEditorProps) {
   const t = mergeLabels({ cropEditor: labels }).cropEditor;
+
+  // The image being cropped is either a saved photo (a server URL that may
+  // need a header an <img> cannot send) or a queued one previewed from a
+  // local blob. useResolvedImageSrc handles both; the <img> below keeps its
+  // own ref, onLoad and transform, which the crop maths depends on.
+  const resolvedImageSrc = useResolvedImageSrc(imageUrl, loadImage);
 
   const imgRef = useRef<HTMLImageElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -437,7 +457,7 @@ export function PhotoCropEditor({ imageUrl, saving, onCancel, onSave, labels }: 
             {/* eslint-disable-next-line jsx-a11y/alt-text -- decorative, the dialog itself is labelled */}
             <img
               ref={imgRef}
-              src={imageUrl}
+              src={resolvedImageSrc.href}
               alt=""
               className={styles.image}
               style={{

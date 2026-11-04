@@ -1,0 +1,467 @@
+/**
+ * Every custom property below has a fallback baked into its own var()
+ * call, so this renders correctly with zero theme setup. See the package
+ * README's "Theming" section for the full token list and what each one
+ * controls.
+ */
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mblock-space-2, 8px);
+}
+
+.grid {
+  display: grid;
+  /* 160px minimum — big enough to actually judge a crop/reorder decision
+     by, not just recognise that a photo exists. */
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--mblock-space-2, 8px);
+}
+
+/* One grid item. A column, so the dismissible video size-warning note can
+   sit BELOW the clipped square as normal-flow content and grow the row to
+   fit it — rather than being clipped away by the same `overflow: hidden`
+   that keeps the poster cropped square, or overlapping the poster's own
+   absolutely-positioned badges. */
+.mediaTile {
+  display: flex;
+  flex-direction: column;
+}
+
+.photo {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  /* Makes the tile a SIZE container so `.playBadge svg` can size itself
+     from the tile's own box in `cq` units — see that rule for why a plain
+     width percentage cannot express "a constant share of the tile". Safe
+     to declare here: size containment requires an element whose box does
+     not depend on its contents, and this one's comes entirely from the
+     grid column plus the aspect-ratio above. */
+  container-type: size;
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Click-to-crop trigger. Wraps the thumbnail image itself (a <button>
+   containing an <img> is valid; the remove/move buttons below are DOM
+   SIBLINGS of this one, not nested inside it — a button can never be
+   nested inside another button). Fills the whole tile so the entire
+   thumbnail is the click target, with the overlay controls sitting
+   visually on top. */
+.editButton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.editButton:focus-visible {
+  outline: 3px solid var(--mblock-accent, #e8622c);
+  outline-offset: -3px;
+}
+
+.removeButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeButton:disabled {
+  opacity: 0.6;
+}
+
+/* Keyboard-operable reorder controls — drag & drop alone is unusable by
+   keyboard, so every tile also gets explicit move-left/move-right
+   buttons. Bottom-left corner keeps them clear of the delete button. */
+.moveButtons {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  display: flex;
+  gap: 2px;
+}
+
+.moveButton {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.moveButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Visually hidden but still announced by screen readers — same clip
+   technique as .fileInput below, used here for the reorder aria-live
+   region. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.pickLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--mblock-space-2, 8px);
+  border: 2px dashed var(--mblock-border, #d8dbe0);
+  border-radius: var(--mblock-radius, 8px);
+  padding: 1rem;
+  font-weight: var(--mblock-font-weight-accent, 600);
+  color: var(--mblock-success, #2f9e44);
+  cursor: pointer;
+  text-align: center;
+  /* Big tap target for one-handed phone use. */
+  min-height: 3rem;
+}
+
+.pickLabel:focus-within {
+  outline: 3px solid var(--mblock-accent, #e8622c);
+  outline-offset: 2px;
+}
+
+/* Active drag-over state — dropping is the same dashed box, just made
+   obviously "yes, here" while a file is being dragged across it. */
+.pickLabelDragging {
+  border-color: var(--mblock-success, #2f9e44);
+  background: var(--mblock-surface-alt, #f3f4f6);
+  color: var(--mblock-success, #2f9e44);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.hint {
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-text-muted, #6b7280);
+  margin: 0;
+}
+
+.googlePhotosRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mblock-space-1, 4px);
+}
+
+.googlePhotosButton {
+  background: var(--mblock-surface, #ffffff);
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: var(--mblock-radius, 8px);
+  padding: 0.5rem 1rem;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  font-weight: var(--mblock-font-weight-accent, 600);
+  color: var(--mblock-text, #1a1a1a);
+  cursor: pointer;
+}
+
+.googlePhotosButton:hover:not(:disabled) {
+  background: var(--mblock-surface-tint, #eef2f7);
+}
+
+.googlePhotosButton:disabled {
+  color: var(--mblock-text-muted, #6b7280);
+  cursor: default;
+}
+
+.googlePhotosCancel {
+  align-self: flex-start;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--mblock-text-muted, #6b7280);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.googlePhotosError {
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-danger, #b3261e);
+  margin: 0;
+}
+
+.googlePhotosNotice {
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-success, #2f9e44);
+  margin: 0;
+}
+
+.queue {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mblock-space-2, 8px);
+}
+
+.queueItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: var(--mblock-surface, #ffffff);
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 8px;
+  padding: var(--mblock-space-2, 8px);
+}
+
+.queueRow {
+  display: flex;
+  align-items: center;
+  gap: var(--mblock-space-2, 8px);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+}
+
+.thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.queueName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.queueStatus {
+  flex-shrink: 0;
+  font-weight: var(--mblock-font-weight-accent, 600);
+}
+
+.statusSuccess {
+  color: var(--mblock-success, #2f9e44);
+}
+
+.statusError {
+  color: var(--mblock-danger, #b3261e);
+}
+
+.statusPending {
+  color: var(--mblock-text-muted, #6b7280);
+}
+
+.progressTrack {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--mblock-surface-alt, #f3f4f6);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--mblock-success, #2f9e44);
+  transition: width 0.15s ease;
+}
+
+.errorText {
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-danger, #b3261e);
+  margin: 0;
+}
+
+.errorActions {
+  display: flex;
+  gap: var(--mblock-space-2, 8px);
+}
+
+.retryButton {
+  align-self: flex-start;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  background: none;
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  color: var(--mblock-primary, #2a2a72);
+}
+
+/* Opens the crop editor for a queued/uploading/error item — same visual
+   weight as .retryButton (a plain outlined pill) since both sit in the
+   same row. :disabled (the 'uploading' state) dims it rather than hiding
+   it, so it reads as temporarily unavailable, not gone. */
+.queueEditButton {
+  flex-shrink: 0;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  background: none;
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  color: var(--mblock-primary, #2a2a72);
+  min-height: 2rem;
+}
+
+.queueEditButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* -- Video tiles ------------------------------------------------------- */
+
+.videoPoster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* So a click on the poster always reaches the controls underneath. */
+  pointer-events: none;
+}
+
+/* THE PROPORTION IS THE THING, not the pixel count.
+ *
+ * The origin project's first attempt at "a disc that scales with its
+ * tile" was `clamp(38px, 26%, 88px)`, and it scaled the WRONG WAY ROUND:
+ * measured in Chromium, the 38px FLOOR bound in an 80px cell (48% of the
+ * tile — the badge visibly swallowed it) while the 88px CEILING bound on a
+ * 1052px hero (8%). Both ends of that clamp were binding, each in the tile
+ * where it did the most damage, so the disc's share of its tile ranged
+ * over roughly 8%-48% while the absolute pixel values looked plausible
+ * everywhere. ABSOLUTE-PIXEL ASSERTIONS ARE EXACTLY HOW THAT PASSED
+ * REVIEW — e2e/media-uploader-video.spec.ts asserts the RATIO instead, in
+ * two tile sizes, because a test pinned to pixels cannot see an inversion.
+ *
+ * WHY NOT A WIDTH PERCENTAGE. `.playBadge` is `inset: 0`, so `%` on width
+ * is already a share of the tile's WIDTH. That is the same thing only
+ * while the tile is square — which it is in THIS package's own grid, but
+ * `.photo`'s aspect-ratio is a plain CSS rule a consumer can override, and
+ * a disc has to fit the SHORT side. `cqmin` — the shorter side of the
+ * tile's own box, hence `container-type: size` on `.photo` — is one number
+ * that holds in every ratio.
+ *
+ * The plain `clamp()` on the line above is the fallback for a browser with
+ * no container query units (Safari < 16): same shape, width basis. The
+ * floor is a legibility minimum (24% of a 60px cell is a 14px dot) and
+ * nothing else; the ceiling is a backstop for a very wide container. */
+.playBadge svg {
+  width: clamp(20px, 24%, 140px);
+  width: clamp(20px, 24cqmin, 140px);
+  height: auto;
+  /* A poster can be any frame, light or dark. The shadow is what keeps
+     the disc's edge visible against a pale sky. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+}
+
+.playBadgeDisc {
+  fill: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  stroke: var(--mblock-on-overlay, #ffffff);
+  stroke-width: 1.5;
+}
+
+.playBadgeArrow {
+  fill: var(--mblock-on-overlay, #ffffff);
+}
+
+.durationBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* The dismissible "this is a big file" note — the AFTER-transcode soft
+   warning, driven by the video's stored `byteSize` (the BEFORE-upload one
+   lives in the video queue panel instead). A normal-flow sibling of the
+   clipped `.photo` square, not a child of it — see `.mediaTile`. */
+.sizeWarning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mblock-space-2, 8px);
+  background: var(--mblock-surface-alt, #f3f4f6);
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-text-muted, #6b7280);
+  margin-top: 0.25rem;
+}
+
+.sizeWarning button {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  color: var(--mblock-primary, #2a2a72);
+}
+
+/* One per-item Google Photos video import failure. */
+.googlePhotosVideoErrorItem {
+  margin: 0;
+}
+
+/* Removes a queued (not-yet-uploaded) or failed photo from the list —
+   distinct from .removeButton, which deletes an already-uploaded photo on
+   the server. This one is purely local, no confirmation needed. */
+.removeQueuedButton {
+  flex-shrink: 0;
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  background: none;
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  color: var(--mblock-text-muted, #6b7280);
+  min-height: 2rem;
+  min-width: 2rem;
+}

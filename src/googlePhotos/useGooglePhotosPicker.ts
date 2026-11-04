@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { base64ToFile } from './base64ToFile';
-import type { GooglePhotosAdapter } from '../types';
-import type { GooglePhotosLabels } from '../labels';
+import type { GooglePhotosAdapter, GooglePhotosVideoImportError, VideoItem } from '../types';
+import type { GooglePhotosLabels, GooglePhotosVideoErrorLabels } from '../labels';
 
 export type GooglePhotosPickerPhase = 'idle' | 'connecting' | 'picking' | 'importing' | 'error';
 
@@ -18,6 +18,7 @@ export type GooglePhotosErrorCode =
   | 'sessionExpired'
   | 'bridgeTimeout'
   | 'popupBlocked'
+  | 'videoNeedsSavedParent'
   | 'startFailed'
   | 'pollFailed'
   | 'importFailed'
@@ -46,7 +47,7 @@ const BACKEND_ERROR_CODE_MAP: Record<string, GooglePhotosErrorCode> = {
 
 /** Resolves a GooglePhotosPickerError into display text using the given
  *  labels. Exported so a consumer building a fully custom UI around this
- *  hook (rather than using PhotoUploader's built-in button) doesn't have
+ *  hook (rather than using MediaUploader's built-in button) doesn't have
  *  to reimplement this switch. */
 export function resolveGooglePhotosErrorMessage(error: GooglePhotosPickerError, labels: GooglePhotosLabels): string {
   switch (error.code) {
@@ -72,9 +73,51 @@ export function resolveGooglePhotosErrorMessage(error: GooglePhotosPickerError, 
       return labels.errors.bridgeTimeout;
     case 'popupBlocked':
       return labels.errors.popupBlocked;
+    case 'videoNeedsSavedParent':
+      return labels.errors.videoNeedsSavedParent;
     default:
       return labels.errors.generic;
   }
+}
+
+/**
+ * The per-item video import failure codes this package knows, as ONE
+ * array mapped to label keys.
+ *
+ * Kept as one table (not a hand-duplicated union plus a separate lookup)
+ * so the type, the mapping and this module's own test all walk the same
+ * list — a new code is added here once. A second, drifting list is a bug
+ * shape the origin project shipped more than once.
+ *
+ * `video_needs_saved_parent` is deliberately NOT here: it rejects the
+ * whole import as a thrown error (see `GooglePhotosErrorCode`), never as
+ * one of these per-item entries.
+ */
+export const GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS: Record<string, keyof GooglePhotosVideoErrorLabels> = {
+  video_not_ready: 'videoNotReady',
+  video_too_large: 'videoTooLarge',
+  video_download_failed: 'videoDownloadFailed',
+  video_processing_failed: 'videoProcessingFailed',
+  video_too_long: 'videoTooLong',
+  video_queue_full: 'videoQueueFull',
+};
+
+/**
+ * Renders one `videoErrors` entry for display.
+ *
+ * Falls back to the backend's own `message` ONLY when `code` is missing
+ * or is not one of the codes above — the honest escape hatch for a
+ * backend addition this package has not met yet, never a substitute for
+ * adding it to the table. Exported for the same reason
+ * `resolveGooglePhotosErrorMessage` is: a consumer building its own UI
+ * around the hook should not have to reimplement this.
+ */
+export function resolveGooglePhotosVideoErrorMessage(
+  entry: GooglePhotosVideoImportError,
+  labels: GooglePhotosLabels,
+): string {
+  const labelKey = entry.code ? GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS[entry.code] : undefined;
+  return labels.videoErrorLine(entry.fileName, labelKey ? labels.videoErrors[labelKey] : entry.message);
 }
 
 // Fixed client-side pacing for the by-state bridge poll — the adapter
@@ -93,7 +136,7 @@ export interface UseGooglePhotosPickerOptions {
    * `GooglePhotosAdapter` in src/types.ts and docs/google-photos-setup.md.
    * Omit this (or pass `undefined`) to disable the feature entirely: the
    * hook then does nothing at all — no timers, no listeners, `start()`/
-   * `cancel()` are no-ops, and `enabled` is `false`. PhotoUploader uses
+   * `cancel()` are no-ops, and `enabled` is `false`. MediaUploader uses
    * that flag to skip rendering the picker button altogether, so a
    * consumer with no Google configuration gets no dead control and no
    * console warning, by construction.
@@ -106,6 +149,38 @@ export interface UseGooglePhotosPickerOptions {
    *  one, via an internal ref, so it is never a reason to re-run an
    *  effect. */
   onPhotosReady: (files: File[]) => void;
+  /**
+   * The owning entity's id, `null` before its first save.
+   *
+   * Read FRESH at the moment of import via a ref, not captured in a
+   * dependency array: this value typically goes `null` -> a real id
+   * exactly once per form, and an import must never run against a stale
+   * id just because a re-render lagged behind. It is also deliberately
+   * NOT a dependency — making it one would churn the poll loop's identity
+   * on every unrelated re-render (a progress tick, say), and a one-time
+   * server result landing in that recreation gap would be silently
+   * dropped.
+   *
+   * A picked PHOTO never needs it. A picked VIDEO does — see
+   * `GooglePhotosAdapter.importGooglePhotosSession`.
+   */
+  entityId?: string | null;
+  /**
+   * Handed the imported videos (each already a real, server-created
+   * 'processing' row) plus any per-item import failures. Optional: a
+   * consumer with no video support simply never passes it, exactly like
+   * the `video` prop elsewhere in this package. Same stable-identity
+   * treatment as `onPhotosReady`. */
+  onVideosReady?: (videos: VideoItem[], errors: GooglePhotosVideoImportError[]) => void;
+}
+
+/** How many items one import actually landed, and how many videos it
+ *  could not. All three can be non-zero at once, which is why this is a
+ *  shape and not a number. */
+export interface GooglePhotosImportCounts {
+  photos: number;
+  videos: number;
+  failedVideos: number;
 }
 
 export interface UseGooglePhotosPickerResult {
@@ -113,14 +188,14 @@ export interface UseGooglePhotosPickerResult {
   enabled: boolean;
   phase: GooglePhotosPickerPhase;
   error: GooglePhotosPickerError | null;
-  /** Set after a successful import, to how many photos were imported —
-   *  the consumer decides how to phrase that (see
+  /** Set after a successful import, to what it landed — the consumer
+   *  decides how to phrase that (see
    *  `labels.googlePhotos.importedNotice`). Cleared when a new run
    *  starts. Not cleared automatically otherwise: once the popup has
    *  navigated through the OAuth provider's own pages this tab usually
    *  can no longer close it (see docs/google-photos-setup.md), so this
    *  is the one persistent signal that the import actually finished. */
-  importedCount: number | null;
+  imported: GooglePhotosImportCounts | null;
   start: () => void;
   /** Explicit "give up": stops polling, closes the popup if still
    *  reachable, and returns to idle. */
@@ -154,10 +229,15 @@ export interface UseGooglePhotosPickerResult {
  * modes and why the "bridge" step (a server-side landing page with a
  * `state` parameter) exists at all.
  */
-export function useGooglePhotosPicker({ adapter, onPhotosReady }: UseGooglePhotosPickerOptions): UseGooglePhotosPickerResult {
+export function useGooglePhotosPicker({
+  adapter,
+  onPhotosReady,
+  entityId,
+  onVideosReady,
+}: UseGooglePhotosPickerOptions): UseGooglePhotosPickerResult {
   const [phase, setPhase] = useState<GooglePhotosPickerPhase>('idle');
   const [error, setError] = useState<GooglePhotosPickerError | null>(null);
-  const [importedCount, setImportedCount] = useState<number | null>(null);
+  const [imported, setImported] = useState<GooglePhotosImportCounts | null>(null);
 
   const popupRef = useRef<Window | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,6 +250,19 @@ export function useGooglePhotosPicker({ adapter, onPhotosReady }: UseGooglePhoto
   const onPhotosReadyRef = useRef(onPhotosReady);
   useEffect(() => {
     onPhotosReadyRef.current = onPhotosReady;
+  });
+
+  // onVideosReady gets the same treatment, for the same reason.
+  const onVideosReadyRef = useRef(onVideosReady);
+  useEffect(() => {
+    onVideosReadyRef.current = onVideosReady;
+  });
+
+  // See `entityId`'s own doc: a ref updated every render, deliberately
+  // not a dependency.
+  const entityIdRef = useRef(entityId);
+  useEffect(() => {
+    entityIdRef.current = entityId;
   });
 
   useEffect(() => {
@@ -226,20 +319,43 @@ export function useGooglePhotosPicker({ adapter, onPhotosReady }: UseGooglePhoto
             if (res.done) {
               setPhase('importing');
               try {
-                const { photos } = await adapter.importGooglePhotosSession(sessionId);
+                const {
+                  photos,
+                  videos = [],
+                  videoErrors = [],
+                  // `entityIdRef`, not a captured value — see `entityId`'s
+                  // own doc. An adapter that ignores the argument (a
+                  // photo-only consumer) is unaffected.
+                } = await adapter.importGooglePhotosSession(sessionId, entityIdRef.current ?? null);
                 if (!aliveRef.current) return;
                 // Best-effort: works only if this tab still has a live
                 // handle on the popup, which by this point it usually
-                // does NOT — see `importedCount`'s own doc above.
+                // does NOT — see `imported`'s own doc above.
                 try {
                   popupRef.current?.close();
                 } catch {
                   // Severed popup — not closable from here.
                 }
                 onPhotosReadyRef.current(photos.map((p) => base64ToFile(p.fileName, p.contentType, p.dataBase64)));
+                // Videos arrive as server rows, not bytes — the consumer
+                // merges them into its own `videos` state and the status
+                // poll takes them from 'processing' to 'ready'.
+                onVideosReadyRef.current?.(videos, videoErrors);
                 resetToIdle();
-                setImportedCount(photos.length);
+                setImported({ photos: photos.length, videos: videos.length, failedVideos: videoErrors.length });
               } catch (err) {
+                // The ONE import-time failure that rejects the whole
+                // import rather than landing in a per-item `videoErrors`
+                // entry: a video was picked with no saved parent to
+                // attach it to. Reported by its own code so a consumer
+                // can tell the user to save first, instead of showing
+                // the generic "importing failed".
+                const code =
+                  err && typeof err === 'object' && 'code' in err ? (err as { code?: unknown }).code : undefined;
+                if (code === 'video_needs_saved_parent') {
+                  fail('videoNeedsSavedParent');
+                  return;
+                }
                 fail('importFailed', err instanceof Error ? err.message : undefined);
               }
               return;
@@ -329,7 +445,7 @@ export function useGooglePhotosPicker({ adapter, onPhotosReady }: UseGooglePhoto
     if (phase !== 'idle' && phase !== 'error') return;
     setPhase('connecting');
     setError(null);
-    setImportedCount(null); // a new run supersedes the last one's "you can close it" notice
+    setImported(null); // a new run supersedes the last one's "you can close it" notice
     void (async () => {
       try {
         const { url, state } = await adapter.startGooglePhotosPicker();
@@ -352,9 +468,9 @@ export function useGooglePhotosPicker({ adapter, onPhotosReady }: UseGooglePhoto
     } catch {
       // A severed popup may not be closable from here — nothing to do.
     }
-    setImportedCount(null);
+    setImported(null);
     resetToIdle();
   }, [resetToIdle]);
 
-  return { enabled: Boolean(adapter), phase, error, importedCount, start, cancel, dismissError: resetToIdle };
+  return { enabled: Boolean(adapter), phase, error, imported, start, cancel, dismissError: resetToIdle };
 }

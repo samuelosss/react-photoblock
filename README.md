@@ -1,17 +1,34 @@
-# react-photoblock
+# react-mediablock
 
-A dependency-injected React photo uploader and crop editor: multi-photo
-pick/drag upload with per-file progress, drag-and-keyboard reorder,
-click-to-crop with 90° rotation, and an optional Google Photos picker
-adapter.
+A dependency-injected React **media authoring block**: pick or drag in
+photos and videos, watch them upload with per-file progress, arrange them
+in **one combined gallery** by drag or keyboard, click any photo to
+crop/rotate it, and (optionally) import from Google Photos.
+
+Not a public gallery and not a player — this is the **authoring** side: the
+component someone edits a post or a project with.
+
+### What it deliberately does not do
+
+**Your server transcodes. This package has no codec knowledge at all.** For
+video it accepts a file, hands it to your `uploadVideo`, polls your
+`pollVideos` until the status moves, renders the poster URL you give back,
+and lets the user reorder it. No ffmpeg, no rendition ladder, no opinion
+about containers beyond a MIME filter you can replace. That line is why
+"zero runtime dependencies" is still true with video in the box.
 
 **No HTTP client, anywhere.** Every server interaction — upload, delete,
-reorder, replace, and (optionally) the Google Photos OAuth flow — is
-injected as plain functions. The component makes zero `fetch` calls of its
-own. This is the whole design, not an implementation detail: it's what lets
-the same two components sit behind any backend, any auth scheme, any
-upload endpoint shape, as long as you implement the contract in
+reorder, replace, the video lifecycle, and the Google Photos OAuth flow —
+is injected as plain functions. The components make zero `fetch` calls of
+their own. This is the whole design, not an implementation detail: it's
+what lets them sit behind any backend, any auth scheme, any endpoint shape,
+as long as you implement the contract in
 [`docs/server-contract.md`](./docs/server-contract.md).
+
+**It doesn't know what a bearer token is**, either. If your thumbnails sit
+behind a header an `<img src>` cannot send, you inject
+[`loadImage`](#loading-images-that-need-a-request-header). Omit it and
+every image is a plain `<img>`.
 
 **Zero runtime dependencies beyond React**, which is a peer dependency, not
 bundled.
@@ -19,21 +36,21 @@ bundled.
 ## Install
 
 ```sh
-npm install react-photoblock
+npm install react-mediablock
 ```
 
 ```tsx
-import { PhotoUploader } from 'react-photoblock';
-import 'react-photoblock/styles.css';
+import { MediaUploader } from 'react-mediablock';
+import 'react-mediablock/styles.css';
 ```
 
 ## Minimal working example
 
 ```tsx
 import { useState } from 'react';
-import { PhotoUploader } from 'react-photoblock';
-import 'react-photoblock/styles.css';
-import type { PhotoApi } from 'react-photoblock';
+import { MediaUploader } from 'react-mediablock';
+import 'react-mediablock/styles.css';
+import type { PhotoApi } from 'react-mediablock';
 
 const api: PhotoApi = {
   async uploadPhoto(entityId, file, onProgress) {
@@ -64,7 +81,7 @@ const api: PhotoApi = {
 
 function MyForm() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  return <PhotoUploader entityId="42" imageUrls={imageUrls} onImageUrlsChange={setImageUrls} api={api} />;
+  return <MediaUploader entityId="42" imageUrls={imageUrls} onImageUrlsChange={setImageUrls} api={api} />;
 }
 ```
 
@@ -75,11 +92,60 @@ content-addressed URLs). Getting that part wrong is the most likely way
 this package looks broken while the frontend code is fine.
 
 See [`examples/basic/`](./examples/basic) for a complete, runnable app with
-in-memory fakes instead of real endpoints.
+in-memory fakes instead of real endpoints — including the video lifecycle,
+faked end to end (a "transcode" that takes a few seconds and then produces
+a poster), so you can see the queue panel, the status poll and the combined
+reorder working without a backend.
+
+### Adding video
+
+```tsx
+const video: VideoApi = {
+  async uploadVideo(entityId, file, onProgress) {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`/api/entities/${entityId}/videos`, { method: 'POST', body: form });
+    onProgress(100);
+    // 202 + a 'processing' row. Do NOT transcode inside this request.
+    return { fileName: file.name, status: 'success', video: await res.json() };
+  },
+  async deleteVideo(entityId, videoId) {
+    await fetch(`/api/entities/${entityId}/videos/${videoId}`, { method: 'DELETE' });
+  },
+  async pollVideos(entityId) {
+    const res = await fetch(`/api/entities/${entityId}/videos`, { cache: 'no-store' });
+    return res.json(); // every video, every status
+  },
+  async reorderMedia(entityId, items) {
+    const res = await fetch(`/api/entities/${entityId}/media/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    });
+    return res.json(); // { imageUrls, videos, media }
+  },
+};
+
+<MediaUploader
+  entityId={entityId}
+  imageUrls={imageUrls}
+  onImageUrlsChange={setImageUrls}
+  api={api}
+  video={video}
+  videos={videos}
+  onVideosChange={setVideos}
+  media={media}
+  onMediaChange={setMedia}
+  videoLimits={{ maxBytes: 300 * 1024 * 1024, maxDurationSeconds: 900 }}
+/>;
+```
+
+The hard parts are all on the other side of those four functions. §6-§9 of
+[`docs/server-contract.md`](./docs/server-contract.md) is not optional
+reading if you implement them.
 
 ## Props
 
-### `<PhotoUploader />`
+### `<MediaUploader />`
 
 | Prop                | Type                                                              | Required | Notes                                                                                                                     |
 | -------------------- | ------------------------------------------------------------------ | :------: | --------------------------------------------------------------------------------------------------------------------------- |
@@ -89,9 +155,17 @@ in-memory fakes instead of real endpoints.
 | `api`               | [`PhotoApi`](#photoapi)                                            |    Yes   | The four server operations.                                                                                               |
 | `onQueueStateChange`| `(state: { pending: boolean; hasErrors: boolean }) => void`       |    No    | Fires as the upload queue changes — use it to block navigation while uploads are in flight or have failed.                |
 | `googlePhotos`      | [`GooglePhotosAdapter`](#googlephotosadapter) \| `undefined`      |    No    | Provide all four functions to enable "Choose from Google Photos"; omit entirely to disable it. See [the setup guide](./docs/google-photos-setup.md). |
-| `labels`            | `DeepPartial<PhotoBlockLabels>`                                    |    No    | Override any subset of the UI text — see [Labels & theming](#labels--theming) below.                                      |
+| `labels`            | `DeepPartial<MediaBlockLabels>`                                    |    No    | Override any subset of the UI text — see [Labels & theming](#labels--theming) below.                                      |
+| `loadImage`         | `(src: string) => Promise<Blob> \| null`                          |    No    | Fetch image bytes yourself, for an endpoint an `<img src>` can't reach. See [below](#loading-images-that-need-a-request-header). Absent = plain `<img>`. **Memoize it.** |
+| `video`             | [`VideoApi`](#videoapi) \| `undefined`                            |    No    | The four video operations. Providing this is the **only** thing that turns video support on. |
+| `videos`            | `VideoItem[]`                                                     |    No    | Every video this entity has, **every status**. Mirrors `imageUrls`, but as full rows.      |
+| `onVideosChange`    | `(videos: VideoItem[]) => void`                                   |    No    | Called whenever that list changes (upload, delete, status poll, reorder).                  |
+| `media`             | `MediaItem[]`                                                     |    No    | The server's ONE ordered list — the **order authority**. See [below](#one-combined-gallery-media-vs-imageurls). |
+| `onMediaChange`     | `(media: MediaItem[]) => void`                                    |    No    | **Required for a moved video to stick.** See below.                                        |
+| `videoLimits`       | [`VideoLimits`](#videolimits)                                     |    No    | Client-side mirrors of **your server's** limits. Pass your real numbers.                   |
+| `estimateVideoDurationSeconds` | `(file: File) => Promise<number \| null>`              |    No    | Defaults to a real `<video>` metadata probe. Injectable mainly so tests don't need a decoder. |
 
-**About `entityId` being `null`:** `PhotoUploader` works from the moment a
+**About `entityId` being `null`:** `MediaUploader` works from the moment a
 "new" form opens, before anything has been saved. Pick files while
 `entityId` is `null` and they queue locally (instant preview, nothing
 uploaded, no draft entity created just to get an id); the moment your app
@@ -114,6 +188,120 @@ interface PhotoApi {
 Full contract, including what your server needs to do for each of these to
 be correct: [`docs/server-contract.md`](./docs/server-contract.md).
 
+#### `VideoApi`
+
+```ts
+interface VideoApi {
+  uploadVideo: (entityId: string, file: File, onProgress: (percent: number) => void) => Promise<VideoUploadResult>;
+  deleteVideo: (entityId: string, videoId: string) => Promise<void>;
+  pollVideos: (entityId: string) => Promise<VideoItem[]>;
+  reorderMedia: (entityId: string, items: MediaOrderItem[]) => Promise<MediaOrderResult>;
+}
+```
+
+Supply it and you get a second dropzone, a before-upload size warning, a
+transcode-status queue panel, video tiles in the same grid as the photos,
+and one reorder across both. Omit it and none of that exists — there is no
+half-enabled state.
+
+**`uploadVideo` must return immediately with a `'processing'` row**, not
+wait for a transcode. In the reference implementation a transcode runs at
+roughly 0.4x realtime, so a three-minute clip is a seven-minute request.
+`pollVideos` is how the component learns it finished; it polls every 4
+seconds while any row is `'processing'` and stops the moment none is.
+
+A `'processing'` or `'failed'` video has no poster, so it is **never** a
+grid tile — it renders in the queue panel instead. Read
+[`docs/server-contract.md`](./docs/server-contract.md) §6-§9 before
+implementing this; §8's completeness rule and §9's six paths are each a bug
+that shipped once.
+
+#### `VideoLimits`
+
+```ts
+interface VideoLimits {
+  maxBytes?: number;                  // default 300 MB
+  maxDurationSeconds?: number;        // default 900
+  sizeWarnBytes?: number;             // default 25 MB — soft, never blocks
+  estimatedBytesPerSecond?: number;   // default ~104.9 KB/s (6 MB per minute, measured at 720p)
+  acceptedMimeTypes?: string[];       // default mp4, quicktime, x-matroska, webm
+}
+```
+
+**Pass your own numbers.** These only exist so a doomed file isn't pushed
+up a phone uplink first; your server is the real enforcement in every case.
+The reference implementation hardcoded them on the frontend while the
+server read them from env vars, and any deployment overriding one left the
+UI quietly disagreeing with what the server would accept.
+
+#### One combined gallery: `media` vs `imageUrls`
+
+`media` is the **ORDER** authority. `imageUrls` and `videos` are the
+**CONTENT** authority. Anything `media` doesn't mention is appended to a
+fallback tail.
+
+The reason is that `imageUrls: string[]` carries no position, so *no*
+arrangement with a video between two photos is representable in it. Before
+`media` existed in the reference implementation, the grid could only derive
+"photos in order, then videos in order": pressing an arrow on a video tile
+fired the handler, the server stored the new order, and the response
+re-derived the same list and snapped the tile straight back.
+
+Content stays with `imageUrls`/`videos` because they're fresher between
+round trips — an upload returns only `imageUrls`, a crop returns a fresh
+`?v=` on the same id, a delete removes a row, a poll flips
+`processing`→`ready`.
+
+**`media` must come back from every mutation that returns the entity, not
+just the reorder.** The reference implementation applied it on reorder
+only, and a freshly uploaded photo then appeared in the wrong place and
+moved by itself on reload. The six paths are tabulated in
+[`docs/server-contract.md`](./docs/server-contract.md) §9.
+
+`media` is optional: omit it and you get photos-then-videos, which is
+correct but cannot place a video between two photos.
+
+#### Loading images that need a request header
+
+**An `<img src>` cannot send a header.** If your thumbnails are served from
+an endpoint behind `Authorization: Bearer …` — because the person editing a
+draft must see photos the public cannot — pointing an `<img>` at those URLs
+makes every thumbnail 401 and render broken.
+
+**A token in the query string is not the alternative.** `?token=…` looks
+like the easy fix and isn't: reverse proxies log full request lines, so it
+writes a live credential into the access log, where it outlives the session
+and the person who issued it. nginx's default `combined` format does this,
+and so does almost every other proxy's. The header is the only place that
+value belongs.
+
+So inject the fetch. The package never learns what a token is:
+
+```tsx
+const loadImage = useCallback(
+  (src: string) =>
+    src.startsWith('/api/')
+      ? fetch(src, { headers: { Authorization: `Bearer ${token}` } }).then((res) => {
+          if (!res.ok) throw new Error(String(res.status));
+          return res.blob();
+        })
+      : null, // not mine — render it as a plain <img src>
+  [token],
+);
+```
+
+- **Return `null`** for any URL you don't want to handle; it renders
+  directly. That matters in a mixed app where some images are public.
+- **Never called for the package's own local previews** (`blob:`/`data:`
+  URLs it created from a picked file) — routing those through an auth layer
+  would break instant previews. That exclusion is structural, not something
+  you have to remember.
+- **Caching is not lost**: `fetch()` honours the HTTP cache, so keep your
+  URLs content-addressed (§4's `?v=` token) and send a long
+  `Cache-Control` on those routes.
+- **Memoize it.** It's a dependency of the effect that fetches, so a fresh
+  identity every render re-fetches every thumbnail every render.
+
 #### `GooglePhotosAdapter`
 
 ```ts
@@ -121,16 +309,24 @@ interface GooglePhotosAdapter {
   startGooglePhotosPicker: () => Promise<{ url: string; state: string }>;
   pollGooglePhotosBridge: (state: string) => Promise<GooglePhotosBridgePollResult>;
   pollGooglePhotosSession: (sessionId: string) => Promise<GooglePhotosPollResult>;
-  importGooglePhotosSession: (sessionId: string) => Promise<GooglePhotosImportResult>;
+  importGooglePhotosSession: (sessionId: string, entityId: string | null) => Promise<GooglePhotosImportResult>;
 }
 ```
+
+The picker handles **photos and video through the same button** — Google's
+own picker has no media-type filter to configure that away. `entityId` is
+whatever the component holds at the moment of import, read fresh; a picked
+photo never needs it, but a picked video does, because your server creates
+the row. With no saved parent, reject the import with
+`code: 'video_needs_saved_parent'` and the component says "save first"
+rather than showing a generic failure.
 
 Full guide, including the OAuth setup and the failure modes worth knowing
 about first: [`docs/google-photos-setup.md`](./docs/google-photos-setup.md).
 
 ### `<PhotoCropEditor />`
 
-`PhotoUploader` renders this internally for click-to-crop, but it's
+`MediaUploader` renders this internally for click-to-crop, but it's
 exported standalone too — it takes no `api`, no `entityId`, nothing
 server-related at all; it just turns a picked crop/rotation into a Blob.
 
@@ -144,7 +340,7 @@ server-related at all; it just turns a picked crop/rotation into a Blob.
 
 ### `useGooglePhotosPicker`
 
-The hook `PhotoUploader` uses internally, exported in case you want to
+The hook `MediaUploader` uses internally, exported in case you want to
 build your own UI around the Google Photos flow instead of the built-in
 button:
 
@@ -152,11 +348,13 @@ button:
 function useGooglePhotosPicker(options: {
   adapter?: GooglePhotosAdapter; // undefined disables the whole hook
   onPhotosReady: (files: File[]) => void;
+  entityId?: string | null;      // read fresh at import time; a picked VIDEO needs it
+  onVideosReady?: (videos: VideoItem[], errors: GooglePhotosVideoImportError[]) => void;
 }): {
   enabled: boolean;
   phase: 'idle' | 'connecting' | 'picking' | 'importing' | 'error';
   error: { code: GooglePhotosErrorCode; detail?: string } | null;
-  importedCount: number | null;
+  imported: { photos: number; videos: number; failedVideos: number } | null;
   start: () => void;
   cancel: () => void;
   dismissError: () => void;
@@ -164,9 +362,14 @@ function useGooglePhotosPicker(options: {
 ```
 
 `resolveGooglePhotosErrorMessage(error, labels.googlePhotos)` turns an
-`error` object into display text using your labels — the hook itself never
-produces localized strings, only error codes, so it stays free of any UI
-text concerns.
+`error` object into display text using your labels, and
+`resolveGooglePhotosVideoErrorMessage(entry, labels.googlePhotos)` does the
+same for one per-item video failure — the hook itself never produces
+localized strings, only error codes, so it stays free of any UI text
+concerns.
+
+`imported` is a shape rather than a count because a single import can land
+photos, land videos and fail on other videos all at once.
 
 ## Labels & theming
 
@@ -179,19 +382,19 @@ ready-made preset (`csLabels`, the language this package's components
 originally shipped with in production):
 
 ```tsx
-import { PhotoUploader, csLabels } from 'react-photoblock';
+import { MediaUploader, csLabels } from 'react-mediablock';
 
-<PhotoUploader labels={csLabels} /* ...other props */ />;
+<MediaUploader labels={csLabels} /* ...other props */ />;
 ```
 
 Override a single string without retyping the rest — overrides merge onto
 the default one field deep (two deep for `googlePhotos.errors`):
 
 ```tsx
-<PhotoUploader labels={{ uploader: { dropzoneIdle: 'Drop your photos here!' } }} /* ... */ />;
+<MediaUploader labels={{ uploader: { dropzoneIdle: 'Drop your photos here!' } }} /* ... */ />;
 ```
 
-The full shape is `PhotoBlockLabels` (`{ uploader, cropEditor, googlePhotos }`,
+The full shape is `MediaBlockLabels` (`{ uploader, cropEditor, googlePhotos }`,
 each fully typed) — see [`src/labels.ts`](./src/labels.ts) for every field
 and what renders it; every visible piece of copy in the package traces back
 to exactly one field there.
@@ -199,37 +402,37 @@ to exactly one field there.
 ### Theming
 
 Every color/spacing/typography value is a CSS custom property, namespaced
-`--pb-*`, with a sensible fallback baked into every single `var()` call —
-this is why the package looks correct with zero configuration (see
+`--mblock-*`, with a sensible fallback baked into every single `var()`
+call — this is why the package looks correct with zero configuration (see
 `examples/basic/`, which defines none of these). Override any subset by
 setting these on an ancestor element (or `:root`):
 
-| Token                    | Default fallback              | Used for                                                        |
-| ------------------------- | ------------------------------ | ------------------------------------------------------------------ |
-| `--pb-accent`             | `#e8622c`                     | Focus rings, crop-rectangle border and handles                    |
-| `--pb-success`            | `#2f9e44`                     | Upload progress fill, dropzone idle text, Save button, success text |
-| `--pb-danger`             | `#b3261e`                     | Error text and status                                              |
-| `--pb-primary`            | `#2a2a72`                     | Retry/edit button text                                             |
-| `--pb-surface`            | `#ffffff`                     | Card/dialog/button background                                      |
-| `--pb-surface-alt`        | `#f3f4f6`                     | Progress track background, active-drag dropzone background         |
-| `--pb-surface-tint`       | `#eef2f7`                     | Hover background (Google Photos button)                            |
-| `--pb-border`             | `#d8dbe0`                     | Borders                                                             |
-| `--pb-text`               | `#1a1a1a`                     | Body text                                                           |
-| `--pb-text-muted`         | `#6b7280`                     | Hints, secondary text                                              |
-| `--pb-on-overlay`         | `#ffffff`                     | Icon/text color on the dark circular overlay buttons and crop handle border |
-| `--pb-overlay`            | `rgba(17, 17, 17, 0.82)`      | Dark circular delete/move-button background over thumbnails        |
-| `--pb-scrim`              | `rgba(0, 0, 0, 0.65)`         | Crop editor's full-screen modal backdrop                           |
-| `--pb-stage-bg`           | `#111111`                     | Crop stage background behind a transparent-region image            |
-| `--pb-radius`             | `8px`                         | Standard corner radius                                             |
-| `--pb-space-1`            | `4px`                         | Small gaps                                                          |
-| `--pb-space-2`            | `8px`                         | Standard gaps                                                       |
-| `--pb-space-3`            | `16px`                        | Dialog padding                                                      |
-| `--pb-font-size-sm`       | `0.875rem`                    | Secondary text size                                                 |
-| `--pb-font-weight-accent` | `600`                         | Emphasized text weight (dropzone label, buttons)                    |
+| Token                         | Default fallback         | Used for                                                                   |
+| ----------------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| `--mblock-accent`             | `#e8622c`                | Focus rings, crop-rectangle border and handles                             |
+| `--mblock-success`            | `#2f9e44`                | Upload progress fill, dropzone idle text, Save button, success text        |
+| `--mblock-danger`             | `#b3261e`                | Error text and status                                                      |
+| `--mblock-primary`            | `#2a2a72`                | Retry/edit button text                                                     |
+| `--mblock-surface`            | `#ffffff`                | Card/dialog/button background                                              |
+| `--mblock-surface-alt`        | `#f3f4f6`                | Progress track background, active-drag dropzone background                 |
+| `--mblock-surface-tint`       | `#eef2f7`                | Hover background (Google Photos button)                                    |
+| `--mblock-border`             | `#d8dbe0`                | Borders                                                                    |
+| `--mblock-text`               | `#1a1a1a`                | Body text                                                                  |
+| `--mblock-text-muted`         | `#6b7280`                | Hints, secondary text                                                      |
+| `--mblock-on-overlay`         | `#ffffff`                | Icon/text color on the dark overlay buttons and the crop handle border     |
+| `--mblock-overlay`            | `rgba(17, 17, 17, 0.82)` | Dark circular delete/move-button background over thumbnails                |
+| `--mblock-scrim`              | `rgba(0, 0, 0, 0.65)`    | Crop editor's full-screen modal backdrop                                   |
+| `--mblock-stage-bg`           | `#111111`                | Crop stage background behind a transparent-region image                    |
+| `--mblock-radius`             | `8px`                    | Standard corner radius                                                     |
+| `--mblock-space-1`            | `4px`                    | Small gaps                                                                 |
+| `--mblock-space-2`            | `8px`                    | Standard gaps                                                              |
+| `--mblock-space-3`            | `16px`                   | Dialog padding                                                             |
+| `--mblock-font-size-sm`       | `0.875rem`               | Secondary text size                                                        |
+| `--mblock-font-weight-accent` | `600`                    | Emphasized text weight (dropzone label, buttons)                           |
 
 No CSS framework required — this is plain CSS Modules, compiled to one
-stylesheet (`dist/react-photoblock.css`), imported via
-`react-photoblock/styles.css`.
+stylesheet (`dist/react-mediablock.css`), imported via
+`react-mediablock/styles.css`.
 
 ## Server contract
 
@@ -250,6 +453,21 @@ Short version:
 4. **Replace-in-place, keeping the same id**, plus **content-addressed
    URLs** (`?v=<updated_at>`) so a long-lived immutable cache header
    doesn't serve stale bytes after a crop.
+
+And, if you wire up video (§6-§9):
+
+5. **Transcode on a queue; answer the upload immediately** with a
+   `'processing'` row. A `'ready'` row must be fully described and a
+   restart mid-transcode must leave a row that reads as unfinished.
+6. **One shared `sort_order` space across photos and videos**, merged
+   server-side into a `media` array whose **array order is the contract**.
+7. **Validate a reorder's completeness against photos + READY videos** —
+   never against all videos. The grid cannot submit a row it deliberately
+   never shows, so the reference implementation rejected *every* reorder
+   while any clip was transcoding. Keep membership (no foreign ids, no
+   duplicates) at full strength; that part is a security boundary.
+8. **Return `media` from every mutation that returns the entity.** Six
+   paths need it; applying it on the reorder alone is a bug that shipped.
 
 ## Google Photos picker
 
@@ -276,6 +494,25 @@ tested yourself.
   JSDOM (no layout engine, no real paint — see below); the Playwright
   suite (`e2e/`) runs in headless Chromium. Neither is Firefox, neither is
   WebKit-via-Playwright.
+- **No video has ever been transcoded behind this package's tests.** Every
+  video path is exercised against injected fakes, which is the honest
+  consequence of the design — the package has no transcode to test. What
+  that leaves unverified is the *contract*: a real server that answers
+  `uploadVideo` synchronously, or omits `media` from an upload response, or
+  validates a reorder against all videos, will misbehave in ways this
+  suite cannot see. [`docs/server-contract.md`](./docs/server-contract.md)
+  §6-§9 is the only thing standing between you and those bugs, and each of
+  them shipped once in the implementation it was written from.
+- **The real `<video>` duration probe is unexercised.** JSDOM never fires
+  `loadedmetadata`, so every test injects
+  `estimateVideoDurationSeconds`. The default implementation's own
+  behaviour against a real file — including a corrupt one, where it must
+  resolve `null` rather than hang — has not been tested here.
+- **`container-type: size`** (which the play affordance's `cqmin` sizing
+  depends on) needs Safari 16+ / Chrome 106+ / Firefox 110+. Below that the
+  `clamp()` on the preceding line takes over: same shape, sized from the
+  tile's width instead of its short side, which is identical while the tile
+  is square and drifts if you override `.photo`'s aspect ratio.
 - **macOS Safari (WebKit)**: exercised manually by a human, and working —
   including dragging the crop handles and saving. **There is no automated
   WebKit coverage.** Playwright's WebKit browser isn't installed in this
@@ -326,9 +563,12 @@ tested yourself.
 
 ```sh
 npm install
-npm run typecheck   # tsc --noEmit
+npm run typecheck   # tsc --noEmit over src, test and e2e
 npm run lint        # eslint
-npm test            # vitest (unit/component, JSDOM)
-npm run build       # vite build -> dist/
-npm run test:e2e    # playwright (headless Chromium) — requires `npx playwright install chromium` once
+npm test            # vitest (unit/component, JSDOM) — 178 tests
+npm run build       # tsc + vite build -> dist/ (the published artefact)
+npm run test:e2e    # playwright (headless Chromium) — 40 specs; `npx playwright install chromium` once
 ```
+
+`npm run build` is a gate, not a convenience: `files: ["dist"]` means a
+broken build ships a broken package in a way no test catches.

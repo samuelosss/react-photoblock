@@ -4,7 +4,7 @@ This package can offer a "Choose from Google Photos" button, but it ships
 **zero Google integration by default** — no credentials, no Google URLs, no
 `fetch` calls to any Google API, anywhere in `src/`. The feature turns on
 only when you pass a `googlePhotos` adapter (four functions) to
-`PhotoUploader`. Omit it and the button, the hook that drives it, and every
+`MediaUploader`. Omit it and the button, the hook that drives it, and every
 network call it would make simply do not exist — there is no
 disabled/broken state to accidentally ship.
 
@@ -53,7 +53,7 @@ popup window, orchestrated by four endpoints on your own backend:
    the popup's own Google Photos picker UI
       │
       ▼
-7. importGooglePhotosSession(sessionId)
+7. importGooglePhotosSession(sessionId, entityId)
    ─────────────────────────▶ downloads the picked
                                items from Google,
                                runs them through YOUR
@@ -62,8 +62,10 @@ popup window, orchestrated by four endpoints on your own backend:
                                returns base64 payloads
       │
       ▼
-8. useGooglePhotosPicker turns those into real
-   File objects and hands them to onPhotosReady
+8. useGooglePhotosPicker turns photos into real
+   File objects and hands them to onPhotosReady;
+   any VIDEO rows the server created go to
+   onVideosReady (see "Importing video" below)
 ```
 
 Steps 2, 5, 6, and 7 are the four adapter functions. Steps 3-4 (the popup,
@@ -90,8 +92,11 @@ interface GooglePhotosAdapter {
     pollIntervalMs: number;
     expired: boolean;
   }>;
-  importGooglePhotosSession: (sessionId: string) => Promise<{
+  importGooglePhotosSession: (sessionId: string, entityId: string | null) => Promise<{
     photos: Array<{ fileName: string; contentType: string; dataBase64: string }>;
+    // Only when something video-ish was picked — see "Importing video".
+    videos?: VideoItem[];
+    videoErrors?: Array<{ fileName: string; message: string; code?: string }>;
   }>;
 }
 ```
@@ -117,7 +122,104 @@ interface GooglePhotosAdapter {
   pipeline (WebP conversion etc. — see `docs/server-contract.md`), and
   return them as base64 payloads. The frontend turns these into real `File`
   objects via `base64ToFile` (exported from this package) and feeds them
-  into the same upload queue a locally-picked file goes through.
+  into the same upload queue a locally-picked file goes through. Its second
+  argument, and the two optional response fields, exist only for video —
+  see the next section.
+
+## Importing video
+
+**You cannot configure this away.** Google's picker has no media-type
+filter: `PickingConfig` offers nothing that restricts the selection to
+photos (verified against the live reference, 2026-10-07). So a user *can*
+pick a video, and your import route has to handle one — in the reference
+implementation, picking a video returned a raw `415` for the whole batch
+until it did.
+
+### Videos come back as ROWS, not bytes
+
+A photo arrives as base64 and joins the local upload queue. A **video does
+not**: your server downloads it from Google, puts it through the same
+pipeline a direct video upload uses, and creates the row itself. So the
+import response carries `videos` — real, server-created `'processing'` rows
+— and the component merges them into the same `videos` list local uploads
+feed, where the existing status poll takes them to `'ready'`/`'failed'`
+with no extra machinery.
+
+That is why `importGooglePhotosSession` takes an `entityId`: your server
+needs a parent to attach the row to. The component passes whatever it holds
+**at the moment of import** (read fresh, not captured when the flow
+started, because the entity can be saved while the popup is still open),
+and `null` if the entity has never been saved.
+
+**With no parent, reject the whole import** with `code:
+'video_needs_saved_parent'` — a thrown error, not a per-item entry. The
+component has its own message for that code, which tells the user to save
+first; without it they would see a generic "importing failed".
+
+### Stream the download; never buffer it
+
+A photo is a few megabytes. A video can be hundreds. The reference
+implementation streams to a temp file through a byte-counting transform, so
+a clip over the limit is abandoned mid-download rather than held in memory
+first.
+
+### Check Google's own processing status before requesting bytes
+
+A freshly-recorded clip may still be processing on Google's side
+(`mediaFile.mediaFileMetadata.videoMetadata.processingStatus`). Check it
+first and report `video_not_ready` without attempting a download. Treat an
+**absent or UNSPECIFIED** value as "go ahead" — the field is optional in
+Google's response, and refusing on its absence fails the whole feature
+closed for any older item that omits it.
+
+### Cap how many videos one pick can enqueue
+
+A transcode is expensive and runs on a shared queue. The reference
+implementation caps a pick at **two** videos — a module constant, not a
+configurable: at ~0.4x realtime, more than that blocks every other upload
+for the better part of an hour.
+
+### Per-item failures: keep the code set CLOSED
+
+A successful import reports per-video failures in `videoErrors`, each with
+a stable `code`. The corresponding video is simply absent from `videos`,
+never a partial row.
+
+**Do not pass your pipeline's own error codes straight through.** The
+reference implementation typed `code` as a bare `string` and did exactly
+that, so codes belonging to a shared pipeline that knows nothing about
+Google Photos reached the user as untranslated English — the exact bug the
+field had been added to fix. The codes this package has display text for
+are:
+
+| `code`                     | Retriable? |
+| -------------------------- | ---------- |
+| `video_not_ready`          | yes — Google is still processing it |
+| `video_too_large`          | no |
+| `video_too_long`           | no |
+| `video_download_failed`    | yes |
+| `video_processing_failed`  | no |
+| `video_queue_full`         | yes — your transcode queue is busy |
+
+Anything outside that set falls back to your own `message`, which is the
+honest escape hatch for a code this package has not met yet — not a
+substitute for adding one.
+
+### Claim the session atomically
+
+This matters more with video than it did without it. If your import route
+reads the session token at the top and only consumes it at the end, the
+entire import — list, convert every photo, download and transcode every
+video — sits between the check and the consume, and two overlapping POSTs
+for one `sessionId` both find it valid and both run. While the import was
+photo-only that cost duplicate bytes in a queue; with video it means two
+rows, two queued transcodes and two published files for one user action,
+and a published video is not something a thrown error can roll back.
+
+**Claim-and-consume in one atomic step**, and keep the *poll* route's read
+non-consuming — it is called repeatedly while the user is still picking, so
+making `get` itself consume (the obvious one-line version of this fix)
+makes every subsequent import 404.
 
 ## Google Cloud setup
 
@@ -216,7 +318,7 @@ messaging APIs.
 For local development, you can implement all four adapter functions
 against fixtures instead of Google's real APIs (return a fake `url`/`state`
 from `startGooglePhotosPicker`, have `pollGooglePhotosBridge` resolve
-`ready: true` after a short delay, etc.) to exercise `PhotoUploader`'s UI
+`ready: true` after a short delay, etc.) to exercise `MediaUploader`'s UI
 states (connecting → picking → importing → idle, plus each error code) —
 see `examples/basic/` in this repo for a working in-memory fake of the
 whole `GooglePhotosAdapter` interface, alongside fakes for the upload API.

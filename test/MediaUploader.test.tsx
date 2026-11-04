@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PhotoUploader } from '../src/components/PhotoUploader';
+import { MediaUploader } from '../src/components/MediaUploader';
 import type { PhotoApi, UploadResult, ImageUrlsResult, GooglePhotosAdapter } from '../src/types';
 
 function fakeApi(overrides: Partial<PhotoApi> = {}): PhotoApi {
@@ -25,14 +25,14 @@ function makeFile(name: string) {
   return new File(['x'], name, { type: 'image/png' });
 }
 
-describe('PhotoUploader', () => {
+describe('MediaUploader', () => {
   it('renders existing photos and lets them be deleted with confirmation', async () => {
     const api = fakeApi();
     const onImageUrlsChange = vi.fn();
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(
-      <PhotoUploader entityId="entity-1" imageUrls={['/images/1', '/images/2']} onImageUrlsChange={onImageUrlsChange} api={api} />,
+      <MediaUploader entityId="entity-1" imageUrls={['/images/1', '/images/2']} onImageUrlsChange={onImageUrlsChange} api={api} />,
     );
 
     const deleteButtons = screen.getAllByRole('button', { name: 'Delete photo' });
@@ -47,7 +47,7 @@ describe('PhotoUploader', () => {
     const api = fakeApi();
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-    render(<PhotoUploader entityId="entity-1" imageUrls={['/images/1']} onImageUrlsChange={vi.fn()} api={api} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={['/images/1']} onImageUrlsChange={vi.fn()} api={api} />);
     fireEvent.click(screen.getByRole('button', { name: 'Delete photo' }));
 
     expect(api.deleteImage).not.toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('PhotoUploader', () => {
     const onImageUrlsChange = vi.fn();
 
     const { rerender } = render(
-      <PhotoUploader entityId={null} imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />,
+      <MediaUploader entityId={null} imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />,
     );
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -69,7 +69,7 @@ describe('PhotoUploader', () => {
     expect(screen.getByText('Waiting to be saved')).toBeInTheDocument();
     expect(api.uploadPhoto).not.toHaveBeenCalled();
 
-    rerender(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
+    rerender(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
 
     await waitFor(() => expect(api.uploadPhoto).toHaveBeenCalledWith('entity-1', file, expect.any(Function)));
     await waitFor(() => expect(onImageUrlsChange).toHaveBeenCalledWith(['/images/sunset.png']));
@@ -78,7 +78,7 @@ describe('PhotoUploader', () => {
   it('uploads immediately when entityId is already present', async () => {
     const api = fakeApi();
     const onImageUrlsChange = vi.fn();
-    render(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const file = makeFile('a.png');
@@ -95,7 +95,7 @@ describe('PhotoUploader', () => {
         .mockResolvedValueOnce({ fileName: 'a.png', status: 'success', imageUrls: ['/images/a.png'] }),
     });
     const onImageUrlsChange = vi.fn();
-    render(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={onImageUrlsChange} api={api} />);
 
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [makeFile('a.png')] } });
@@ -112,7 +112,7 @@ describe('PhotoUploader', () => {
     const api = fakeApi();
     const onImageUrlsChange = vi.fn();
     render(
-      <PhotoUploader entityId="entity-1" imageUrls={['/images/1', '/images/2', '/images/3']} onImageUrlsChange={onImageUrlsChange} api={api} />,
+      <MediaUploader entityId="entity-1" imageUrls={['/images/1', '/images/2', '/images/3']} onImageUrlsChange={onImageUrlsChange} api={api} />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Move photo 1 of 3 right' }));
@@ -127,7 +127,7 @@ describe('PhotoUploader', () => {
     vi.spyOn(window, 'alert').mockImplementation(() => {});
 
     render(
-      <PhotoUploader entityId="entity-1" imageUrls={['/images/1', '/images/2']} onImageUrlsChange={onImageUrlsChange} api={api} />,
+      <MediaUploader entityId="entity-1" imageUrls={['/images/1', '/images/2']} onImageUrlsChange={onImageUrlsChange} api={api} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Move photo 1 of 2 right' }));
 
@@ -139,7 +139,7 @@ describe('PhotoUploader', () => {
   it('opens the crop editor for an existing photo and replaces it in place on save', async () => {
     const api = fakeApi();
     const onImageUrlsChange = vi.fn();
-    render(<PhotoUploader entityId="entity-1" imageUrls={['/images/7']} onImageUrlsChange={onImageUrlsChange} api={api} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={['/images/7']} onImageUrlsChange={onImageUrlsChange} api={api} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit photo 1 of 1' }));
     expect(screen.getByRole('dialog', { name: 'Edit photo' })).toBeInTheDocument();
@@ -170,7 +170,7 @@ describe('PhotoUploader', () => {
   });
 
   it('has no Google Photos button when no adapter is provided', () => {
-    render(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakeApi()} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakeApi()} />);
     expect(screen.queryByRole('button', { name: 'Choose from Google Photos' })).not.toBeInTheDocument();
   });
 
@@ -181,14 +181,14 @@ describe('PhotoUploader', () => {
       pollGooglePhotosSession: vi.fn(),
       importGooglePhotosSession: vi.fn(),
     };
-    render(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakeApi()} googlePhotos={googlePhotos} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakeApi()} googlePhotos={googlePhotos} />);
     expect(screen.getByRole('button', { name: 'Choose from Google Photos' })).toBeInTheDocument();
   });
 
   it('supports the Czech labels preset end to end, including the dropzone and delete confirmation', async () => {
     const { csLabels } = await import('../src/labels');
     const api = fakeApi();
-    render(<PhotoUploader entityId="entity-1" imageUrls={['/images/1']} onImageUrlsChange={vi.fn()} api={api} labels={csLabels} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={['/images/1']} onImageUrlsChange={vi.fn()} api={api} labels={csLabels} />);
 
     expect(screen.getByText('+ Přidat fotky nebo je sem přetáhnout')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Smazat fotku' })).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe('PhotoUploader', () => {
 
   it('supports overriding a single label without affecting the rest', () => {
     render(
-      <PhotoUploader
+      <MediaUploader
         entityId="entity-1"
         imageUrls={[]}
         onImageUrlsChange={vi.fn()}
@@ -209,7 +209,7 @@ describe('PhotoUploader', () => {
 
   it('announces the picked-file count region for screen readers as files are queued', () => {
     const api = fakeApi();
-    render(<PhotoUploader entityId={null} imageUrls={[]} onImageUrlsChange={vi.fn()} api={api} />);
+    render(<MediaUploader entityId={null} imageUrls={[]} onImageUrlsChange={vi.fn()} api={api} />);
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     fireEvent.change(input, { target: { files: [makeFile('a.png'), makeFile('b.png')] } });
 
