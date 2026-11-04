@@ -7,7 +7,7 @@ import type { MediaItem, MediaOrderItem, VideoItem } from '../types';
  * A 'processing' or 'failed' video is deliberately NOT a tile: its poster
  * does not exist until the transcode finishes (`VideoItem.posterUrl` is
  * null before then), so it has no image to show, and it lives in
- * PhotoUploader's separate video queue panel instead. A blank square in
+ * MediaUploader's separate video queue panel instead. A blank square in
  * the mosaic would not be an improvement.
  *
  * `mediaId` is what a combined reorder submits per item (see

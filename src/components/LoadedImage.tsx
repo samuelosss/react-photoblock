@@ -142,5 +142,5 @@ export function LoadedImage({ src, loadImage, ...imgProps }: LoadedImageProps) {
   // broken-image icon (that needs an src that fails), which is the thing
   // this component exists to stop anyone seeing.
   // eslint-disable-next-line jsx-a11y/alt-text -- alt comes from imgProps; every caller passes one
-  return <img {...imgProps} {...(state === 'ready' ? { src: href } : {})} data-pb-image-state={state} />;
+  return <img {...imgProps} {...(state === 'ready' ? { src: href } : {})} data-mblock-image-state={state} />;
 }

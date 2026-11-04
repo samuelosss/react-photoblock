@@ -4,7 +4,7 @@ This package can offer a "Choose from Google Photos" button, but it ships
 **zero Google integration by default** — no credentials, no Google URLs, no
 `fetch` calls to any Google API, anywhere in `src/`. The feature turns on
 only when you pass a `googlePhotos` adapter (four functions) to
-`PhotoUploader`. Omit it and the button, the hook that drives it, and every
+`MediaUploader`. Omit it and the button, the hook that drives it, and every
 network call it would make simply do not exist — there is no
 disabled/broken state to accidentally ship.
 
@@ -318,7 +318,7 @@ messaging APIs.
 For local development, you can implement all four adapter functions
 against fixtures instead of Google's real APIs (return a fake `url`/`state`
 from `startGooglePhotosPicker`, have `pollGooglePhotosBridge` resolve
-`ready: true` after a short delay, etc.) to exercise `PhotoUploader`'s UI
+`ready: true` after a short delay, etc.) to exercise `MediaUploader`'s UI
 states (connecting → picking → importing → idle, plus each error code) —
 see `examples/basic/` in this repo for a working in-memory fake of the
 whole `GooglePhotosAdapter` interface, alongside fakes for the upload API.

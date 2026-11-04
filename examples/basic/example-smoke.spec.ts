@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
 
-test('basic example renders PhotoUploader with zero CSS/Google config, and a picked file queues locally', async ({ page }) => {
+test('basic example renders MediaUploader with zero CSS/Google config, and a picked file queues locally', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'react-photoblock — basic example' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'react-mediablock — basic example' })).toBeVisible();
   // The dropzone renders with the package's own default English label and
   // its own built-in styling (no app-level CSS setup beyond the imported
-  // stylesheet) — a dashed border is one of its --pb-border fallback
+  // stylesheet) — a dashed border is one of its --mblock-border fallback
   // values, checked via a real computed style, not just text presence.
   const dropzone = page.getByText('+ Add photos, or drag them here');
   await expect(dropzone).toBeVisible();

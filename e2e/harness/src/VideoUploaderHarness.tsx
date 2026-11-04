@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { PhotoUploader } from '../../../src/components/PhotoUploader';
+import { MediaUploader } from '../../../src/components/MediaUploader';
 import type { MediaItem, PhotoApi, VideoApi, VideoItem } from '../../../src/types';
 
 /**
- * Playwright-only harness — mounts PhotoUploader standalone with video
+ * Playwright-only harness — mounts MediaUploader standalone with video
  * support wired to in-memory fakes, no backend involved.
  *
  * It exists for the two claims JSDOM structurally cannot make:
@@ -145,7 +145,7 @@ export function VideoUploaderHarness() {
       {tileWidth && (
         <style>{`[class*="grid"] { grid-template-columns: ${Number(tileWidth)}px !important; }`}</style>
       )}
-      <PhotoUploader
+      <MediaUploader
         entityId="1"
         imageUrls={imageUrls}
         onImageUrlsChange={setImageUrls}

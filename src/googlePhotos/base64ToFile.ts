@@ -1,6 +1,6 @@
 /**
  * Turns a base64-encoded byte string into a real `File`, so a picked
- * Google Photos item can be handed to PhotoUploader's own file-queue
+ * Google Photos item can be handed to MediaUploader's own file-queue
  * exactly as if it had come from the OS file picker or a drag-drop. See
  * `GooglePhotosAdapter.importGooglePhotosSession` in src/types.ts for
  * where `dataBase64` comes from.

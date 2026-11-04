@@ -1,4 +1,4 @@
-# react-photoblock
+# react-mediablock
 
 A dependency-injected React **media authoring block**: pick or drag in
 photos and videos, watch them upload with per-file progress, arrange them
@@ -36,21 +36,21 @@ bundled.
 ## Install
 
 ```sh
-npm install react-photoblock
+npm install react-mediablock
 ```
 
 ```tsx
-import { PhotoUploader } from 'react-photoblock';
-import 'react-photoblock/styles.css';
+import { MediaUploader } from 'react-mediablock';
+import 'react-mediablock/styles.css';
 ```
 
 ## Minimal working example
 
 ```tsx
 import { useState } from 'react';
-import { PhotoUploader } from 'react-photoblock';
-import 'react-photoblock/styles.css';
-import type { PhotoApi } from 'react-photoblock';
+import { MediaUploader } from 'react-mediablock';
+import 'react-mediablock/styles.css';
+import type { PhotoApi } from 'react-mediablock';
 
 const api: PhotoApi = {
   async uploadPhoto(entityId, file, onProgress) {
@@ -81,7 +81,7 @@ const api: PhotoApi = {
 
 function MyForm() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  return <PhotoUploader entityId="42" imageUrls={imageUrls} onImageUrlsChange={setImageUrls} api={api} />;
+  return <MediaUploader entityId="42" imageUrls={imageUrls} onImageUrlsChange={setImageUrls} api={api} />;
 }
 ```
 
@@ -125,7 +125,7 @@ const video: VideoApi = {
   },
 };
 
-<PhotoUploader
+<MediaUploader
   entityId={entityId}
   imageUrls={imageUrls}
   onImageUrlsChange={setImageUrls}
@@ -145,7 +145,7 @@ reading if you implement them.
 
 ## Props
 
-### `<PhotoUploader />`
+### `<MediaUploader />`
 
 | Prop                | Type                                                              | Required | Notes                                                                                                                     |
 | -------------------- | ------------------------------------------------------------------ | :------: | --------------------------------------------------------------------------------------------------------------------------- |
@@ -155,7 +155,7 @@ reading if you implement them.
 | `api`               | [`PhotoApi`](#photoapi)                                            |    Yes   | The four server operations.                                                                                               |
 | `onQueueStateChange`| `(state: { pending: boolean; hasErrors: boolean }) => void`       |    No    | Fires as the upload queue changes — use it to block navigation while uploads are in flight or have failed.                |
 | `googlePhotos`      | [`GooglePhotosAdapter`](#googlephotosadapter) \| `undefined`      |    No    | Provide all four functions to enable "Choose from Google Photos"; omit entirely to disable it. See [the setup guide](./docs/google-photos-setup.md). |
-| `labels`            | `DeepPartial<PhotoBlockLabels>`                                    |    No    | Override any subset of the UI text — see [Labels & theming](#labels--theming) below.                                      |
+| `labels`            | `DeepPartial<MediaBlockLabels>`                                    |    No    | Override any subset of the UI text — see [Labels & theming](#labels--theming) below.                                      |
 | `loadImage`         | `(src: string) => Promise<Blob> \| null`                          |    No    | Fetch image bytes yourself, for an endpoint an `<img src>` can't reach. See [below](#loading-images-that-need-a-request-header). Absent = plain `<img>`. **Memoize it.** |
 | `video`             | [`VideoApi`](#videoapi) \| `undefined`                            |    No    | The four video operations. Providing this is the **only** thing that turns video support on. |
 | `videos`            | `VideoItem[]`                                                     |    No    | Every video this entity has, **every status**. Mirrors `imageUrls`, but as full rows.      |
@@ -165,7 +165,7 @@ reading if you implement them.
 | `videoLimits`       | [`VideoLimits`](#videolimits)                                     |    No    | Client-side mirrors of **your server's** limits. Pass your real numbers.                   |
 | `estimateVideoDurationSeconds` | `(file: File) => Promise<number \| null>`              |    No    | Defaults to a real `<video>` metadata probe. Injectable mainly so tests don't need a decoder. |
 
-**About `entityId` being `null`:** `PhotoUploader` works from the moment a
+**About `entityId` being `null`:** `MediaUploader` works from the moment a
 "new" form opens, before anything has been saved. Pick files while
 `entityId` is `null` and they queue locally (instant preview, nothing
 uploaded, no draft entity created just to get an id); the moment your app
@@ -326,7 +326,7 @@ about first: [`docs/google-photos-setup.md`](./docs/google-photos-setup.md).
 
 ### `<PhotoCropEditor />`
 
-`PhotoUploader` renders this internally for click-to-crop, but it's
+`MediaUploader` renders this internally for click-to-crop, but it's
 exported standalone too — it takes no `api`, no `entityId`, nothing
 server-related at all; it just turns a picked crop/rotation into a Blob.
 
@@ -340,7 +340,7 @@ server-related at all; it just turns a picked crop/rotation into a Blob.
 
 ### `useGooglePhotosPicker`
 
-The hook `PhotoUploader` uses internally, exported in case you want to
+The hook `MediaUploader` uses internally, exported in case you want to
 build your own UI around the Google Photos flow instead of the built-in
 button:
 
@@ -382,19 +382,19 @@ ready-made preset (`csLabels`, the language this package's components
 originally shipped with in production):
 
 ```tsx
-import { PhotoUploader, csLabels } from 'react-photoblock';
+import { MediaUploader, csLabels } from 'react-mediablock';
 
-<PhotoUploader labels={csLabels} /* ...other props */ />;
+<MediaUploader labels={csLabels} /* ...other props */ />;
 ```
 
 Override a single string without retyping the rest — overrides merge onto
 the default one field deep (two deep for `googlePhotos.errors`):
 
 ```tsx
-<PhotoUploader labels={{ uploader: { dropzoneIdle: 'Drop your photos here!' } }} /* ... */ />;
+<MediaUploader labels={{ uploader: { dropzoneIdle: 'Drop your photos here!' } }} /* ... */ />;
 ```
 
-The full shape is `PhotoBlockLabels` (`{ uploader, cropEditor, googlePhotos }`,
+The full shape is `MediaBlockLabels` (`{ uploader, cropEditor, googlePhotos }`,
 each fully typed) — see [`src/labels.ts`](./src/labels.ts) for every field
 and what renders it; every visible piece of copy in the package traces back
 to exactly one field there.
@@ -402,37 +402,37 @@ to exactly one field there.
 ### Theming
 
 Every color/spacing/typography value is a CSS custom property, namespaced
-`--pb-*`, with a sensible fallback baked into every single `var()` call —
-this is why the package looks correct with zero configuration (see
+`--mblock-*`, with a sensible fallback baked into every single `var()`
+call — this is why the package looks correct with zero configuration (see
 `examples/basic/`, which defines none of these). Override any subset by
 setting these on an ancestor element (or `:root`):
 
-| Token                    | Default fallback              | Used for                                                        |
-| ------------------------- | ------------------------------ | ------------------------------------------------------------------ |
-| `--pb-accent`             | `#e8622c`                     | Focus rings, crop-rectangle border and handles                    |
-| `--pb-success`            | `#2f9e44`                     | Upload progress fill, dropzone idle text, Save button, success text |
-| `--pb-danger`             | `#b3261e`                     | Error text and status                                              |
-| `--pb-primary`            | `#2a2a72`                     | Retry/edit button text                                             |
-| `--pb-surface`            | `#ffffff`                     | Card/dialog/button background                                      |
-| `--pb-surface-alt`        | `#f3f4f6`                     | Progress track background, active-drag dropzone background         |
-| `--pb-surface-tint`       | `#eef2f7`                     | Hover background (Google Photos button)                            |
-| `--pb-border`             | `#d8dbe0`                     | Borders                                                             |
-| `--pb-text`               | `#1a1a1a`                     | Body text                                                           |
-| `--pb-text-muted`         | `#6b7280`                     | Hints, secondary text                                              |
-| `--pb-on-overlay`         | `#ffffff`                     | Icon/text color on the dark circular overlay buttons and crop handle border |
-| `--pb-overlay`            | `rgba(17, 17, 17, 0.82)`      | Dark circular delete/move-button background over thumbnails        |
-| `--pb-scrim`              | `rgba(0, 0, 0, 0.65)`         | Crop editor's full-screen modal backdrop                           |
-| `--pb-stage-bg`           | `#111111`                     | Crop stage background behind a transparent-region image            |
-| `--pb-radius`             | `8px`                         | Standard corner radius                                             |
-| `--pb-space-1`            | `4px`                         | Small gaps                                                          |
-| `--pb-space-2`            | `8px`                         | Standard gaps                                                       |
-| `--pb-space-3`            | `16px`                        | Dialog padding                                                      |
-| `--pb-font-size-sm`       | `0.875rem`                    | Secondary text size                                                 |
-| `--pb-font-weight-accent` | `600`                         | Emphasized text weight (dropzone label, buttons)                    |
+| Token                         | Default fallback         | Used for                                                                   |
+| ----------------------------- | ------------------------ | -------------------------------------------------------------------------- |
+| `--mblock-accent`             | `#e8622c`                | Focus rings, crop-rectangle border and handles                             |
+| `--mblock-success`            | `#2f9e44`                | Upload progress fill, dropzone idle text, Save button, success text        |
+| `--mblock-danger`             | `#b3261e`                | Error text and status                                                      |
+| `--mblock-primary`            | `#2a2a72`                | Retry/edit button text                                                     |
+| `--mblock-surface`            | `#ffffff`                | Card/dialog/button background                                              |
+| `--mblock-surface-alt`        | `#f3f4f6`                | Progress track background, active-drag dropzone background                 |
+| `--mblock-surface-tint`       | `#eef2f7`                | Hover background (Google Photos button)                                    |
+| `--mblock-border`             | `#d8dbe0`                | Borders                                                                    |
+| `--mblock-text`               | `#1a1a1a`                | Body text                                                                  |
+| `--mblock-text-muted`         | `#6b7280`                | Hints, secondary text                                                      |
+| `--mblock-on-overlay`         | `#ffffff`                | Icon/text color on the dark overlay buttons and the crop handle border     |
+| `--mblock-overlay`            | `rgba(17, 17, 17, 0.82)` | Dark circular delete/move-button background over thumbnails                |
+| `--mblock-scrim`              | `rgba(0, 0, 0, 0.65)`    | Crop editor's full-screen modal backdrop                                   |
+| `--mblock-stage-bg`           | `#111111`                | Crop stage background behind a transparent-region image                    |
+| `--mblock-radius`             | `8px`                    | Standard corner radius                                                     |
+| `--mblock-space-1`            | `4px`                    | Small gaps                                                                 |
+| `--mblock-space-2`            | `8px`                    | Standard gaps                                                              |
+| `--mblock-space-3`            | `16px`                   | Dialog padding                                                             |
+| `--mblock-font-size-sm`       | `0.875rem`               | Secondary text size                                                        |
+| `--mblock-font-weight-accent` | `600`                    | Emphasized text weight (dropzone label, buttons)                           |
 
 No CSS framework required — this is plain CSS Modules, compiled to one
-stylesheet (`dist/react-photoblock.css`), imported via
-`react-photoblock/styles.css`.
+stylesheet (`dist/react-mediablock.css`), imported via
+`react-mediablock/styles.css`.
 
 ## Server contract
 

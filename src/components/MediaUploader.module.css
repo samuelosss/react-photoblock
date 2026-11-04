@@ -8,7 +8,7 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2, 8px);
+  gap: var(--mblock-space-2, 8px);
 }
 
 .grid {
@@ -16,7 +16,7 @@
   /* 160px minimum — big enough to actually judge a crop/reorder decision
      by, not just recognise that a photo exists. */
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: var(--pb-space-2, 8px);
+  gap: var(--mblock-space-2, 8px);
 }
 
 /* One grid item. A column, so the dismissible video size-warning note can
@@ -34,7 +34,7 @@
   aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--pb-border, #d8dbe0);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   /* Makes the tile a SIZE container so `.playBadge svg` can size itself
      from the tile's own box in `cq` units — see that rule for why a plain
      width percentage cannot express "a constant share of the tile". Safe
@@ -69,7 +69,7 @@
 }
 
 .editButton:focus-visible {
-  outline: 3px solid var(--pb-accent, #e8622c);
+  outline: 3px solid var(--mblock-accent, #e8622c);
   outline-offset: -3px;
 }
 
@@ -81,8 +81,8 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: var(--pb-overlay, rgba(17, 17, 17, 0.82));
-  color: var(--pb-on-overlay, #ffffff);
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -111,8 +111,8 @@
   height: 28px;
   border-radius: 50%;
   border: none;
-  background: var(--pb-overlay, rgba(17, 17, 17, 0.82));
-  color: var(--pb-on-overlay, #ffffff);
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
   font-size: 1rem;
   line-height: 1;
   cursor: pointer;
@@ -141,12 +141,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--pb-space-2, 8px);
-  border: 2px dashed var(--pb-border, #d8dbe0);
-  border-radius: var(--pb-radius, 8px);
+  gap: var(--mblock-space-2, 8px);
+  border: 2px dashed var(--mblock-border, #d8dbe0);
+  border-radius: var(--mblock-radius, 8px);
   padding: 1rem;
-  font-weight: var(--pb-font-weight-accent, 600);
-  color: var(--pb-success, #2f9e44);
+  font-weight: var(--mblock-font-weight-accent, 600);
+  color: var(--mblock-success, #2f9e44);
   cursor: pointer;
   text-align: center;
   /* Big tap target for one-handed phone use. */
@@ -154,16 +154,16 @@
 }
 
 .pickLabel:focus-within {
-  outline: 3px solid var(--pb-accent, #e8622c);
+  outline: 3px solid var(--mblock-accent, #e8622c);
   outline-offset: 2px;
 }
 
 /* Active drag-over state — dropping is the same dashed box, just made
    obviously "yes, here" while a file is being dragged across it. */
 .pickLabelDragging {
-  border-color: var(--pb-success, #2f9e44);
-  background: var(--pb-surface-alt, #f3f4f6);
-  color: var(--pb-success, #2f9e44);
+  border-color: var(--mblock-success, #2f9e44);
+  background: var(--mblock-surface-alt, #f3f4f6);
+  color: var(--mblock-success, #2f9e44);
 }
 
 .fileInput {
@@ -175,8 +175,8 @@
 }
 
 .hint {
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  color: var(--pb-text-muted, #6b7280);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-text-muted, #6b7280);
   margin: 0;
 }
 
@@ -184,73 +184,73 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--pb-space-1, 4px);
+  gap: var(--mblock-space-1, 4px);
 }
 
 .googlePhotosButton {
-  background: var(--pb-surface, #ffffff);
-  border: 1px solid var(--pb-border, #d8dbe0);
-  border-radius: var(--pb-radius, 8px);
+  background: var(--mblock-surface, #ffffff);
+  border: 1px solid var(--mblock-border, #d8dbe0);
+  border-radius: var(--mblock-radius, 8px);
   padding: 0.5rem 1rem;
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  font-weight: var(--pb-font-weight-accent, 600);
-  color: var(--pb-text, #1a1a1a);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  font-weight: var(--mblock-font-weight-accent, 600);
+  color: var(--mblock-text, #1a1a1a);
   cursor: pointer;
 }
 
 .googlePhotosButton:hover:not(:disabled) {
-  background: var(--pb-surface-tint, #eef2f7);
+  background: var(--mblock-surface-tint, #eef2f7);
 }
 
 .googlePhotosButton:disabled {
-  color: var(--pb-text-muted, #6b7280);
+  color: var(--mblock-text-muted, #6b7280);
   cursor: default;
 }
 
 .googlePhotosCancel {
   align-self: flex-start;
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
   background: none;
   border: none;
   padding: 0;
-  color: var(--pb-text-muted, #6b7280);
+  color: var(--mblock-text-muted, #6b7280);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .googlePhotosError {
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  color: var(--pb-danger, #b3261e);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-danger, #b3261e);
   margin: 0;
 }
 
 .googlePhotosNotice {
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  color: var(--pb-success, #2f9e44);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-success, #2f9e44);
   margin: 0;
 }
 
 .queue {
   display: flex;
   flex-direction: column;
-  gap: var(--pb-space-2, 8px);
+  gap: var(--mblock-space-2, 8px);
 }
 
 .queueItem {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  background: var(--pb-surface, #ffffff);
-  border: 1px solid var(--pb-border, #d8dbe0);
+  background: var(--mblock-surface, #ffffff);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 8px;
-  padding: var(--pb-space-2, 8px);
+  padding: var(--mblock-space-2, 8px);
 }
 
 .queueRow {
   display: flex;
   align-items: center;
-  gap: var(--pb-space-2, 8px);
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  gap: var(--mblock-space-2, 8px);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
 }
 
 .thumb {
@@ -271,54 +271,54 @@
 
 .queueStatus {
   flex-shrink: 0;
-  font-weight: var(--pb-font-weight-accent, 600);
+  font-weight: var(--mblock-font-weight-accent, 600);
 }
 
 .statusSuccess {
-  color: var(--pb-success, #2f9e44);
+  color: var(--mblock-success, #2f9e44);
 }
 
 .statusError {
-  color: var(--pb-danger, #b3261e);
+  color: var(--mblock-danger, #b3261e);
 }
 
 .statusPending {
-  color: var(--pb-text-muted, #6b7280);
+  color: var(--mblock-text-muted, #6b7280);
 }
 
 .progressTrack {
   height: 6px;
   border-radius: 999px;
-  background: var(--pb-surface-alt, #f3f4f6);
+  background: var(--mblock-surface-alt, #f3f4f6);
   overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: var(--pb-success, #2f9e44);
+  background: var(--mblock-success, #2f9e44);
   transition: width 0.15s ease;
 }
 
 .errorText {
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  color: var(--pb-danger, #b3261e);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-danger, #b3261e);
   margin: 0;
 }
 
 .errorActions {
   display: flex;
-  gap: var(--pb-space-2, 8px);
+  gap: var(--mblock-space-2, 8px);
 }
 
 .retryButton {
   align-self: flex-start;
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
   background: none;
-  border: 1px solid var(--pb-border, #d8dbe0);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 6px;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
-  color: var(--pb-primary, #2a2a72);
+  color: var(--mblock-primary, #2a2a72);
 }
 
 /* Opens the crop editor for a queued/uploading/error item — same visual
@@ -327,13 +327,13 @@
    it, so it reads as temporarily unavailable, not gone. */
 .queueEditButton {
   flex-shrink: 0;
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
   background: none;
-  border: 1px solid var(--pb-border, #d8dbe0);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 6px;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
-  color: var(--pb-primary, #2a2a72);
+  color: var(--mblock-primary, #2a2a72);
   min-height: 2rem;
 }
 
@@ -371,7 +371,7 @@
  * where it did the most damage, so the disc's share of its tile ranged
  * over roughly 8%-48% while the absolute pixel values looked plausible
  * everywhere. ABSOLUTE-PIXEL ASSERTIONS ARE EXACTLY HOW THAT PASSED
- * REVIEW — e2e/photo-uploader-video.spec.ts asserts the RATIO instead, in
+ * REVIEW — e2e/media-uploader-video.spec.ts asserts the RATIO instead, in
  * two tile sizes, because a test pinned to pixels cannot see an inversion.
  *
  * WHY NOT A WIDTH PERCENTAGE. `.playBadge` is `inset: 0`, so `%` on width
@@ -396,22 +396,22 @@
 }
 
 .playBadgeDisc {
-  fill: var(--pb-overlay, rgba(17, 17, 17, 0.82));
-  stroke: var(--pb-on-overlay, #ffffff);
+  fill: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  stroke: var(--mblock-on-overlay, #ffffff);
   stroke-width: 1.5;
 }
 
 .playBadgeArrow {
-  fill: var(--pb-on-overlay, #ffffff);
+  fill: var(--mblock-on-overlay, #ffffff);
 }
 
 .durationBadge {
   position: absolute;
   bottom: 4px;
   right: 4px;
-  background: var(--pb-overlay, rgba(17, 17, 17, 0.82));
-  color: var(--pb-on-overlay, #ffffff);
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  background: var(--mblock-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--mblock-on-overlay, #ffffff);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   line-height: 1.4;
@@ -425,24 +425,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--pb-space-2, 8px);
-  background: var(--pb-surface-alt, #f3f4f6);
-  border: 1px solid var(--pb-border, #d8dbe0);
+  gap: var(--mblock-space-2, 8px);
+  background: var(--mblock-surface-alt, #f3f4f6);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 6px;
   padding: 0.35rem 0.5rem;
-  font-size: var(--pb-font-size-sm, 0.875rem);
-  color: var(--pb-text-muted, #6b7280);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
+  color: var(--mblock-text-muted, #6b7280);
   margin-top: 0.25rem;
 }
 
 .sizeWarning button {
   flex-shrink: 0;
   background: none;
-  border: 1px solid var(--pb-border, #d8dbe0);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 6px;
   padding: 0.15rem 0.5rem;
   cursor: pointer;
-  color: var(--pb-primary, #2a2a72);
+  color: var(--mblock-primary, #2a2a72);
 }
 
 /* One per-item Google Photos video import failure. */
@@ -455,13 +455,13 @@
    the server. This one is purely local, no confirmation needed. */
 .removeQueuedButton {
   flex-shrink: 0;
-  font-size: var(--pb-font-size-sm, 0.875rem);
+  font-size: var(--mblock-font-size-sm, 0.875rem);
   background: none;
-  border: 1px solid var(--pb-border, #d8dbe0);
+  border: 1px solid var(--mblock-border, #d8dbe0);
   border-radius: 6px;
   padding: 0.25rem 0.6rem;
   cursor: pointer;
-  color: var(--pb-text-muted, #6b7280);
+  color: var(--mblock-text-muted, #6b7280);
   min-height: 2rem;
   min-width: 2rem;
 }

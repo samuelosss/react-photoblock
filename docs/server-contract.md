@@ -1,7 +1,7 @@
 # Server contract
 
 This package draws a hard line: the frontend never talks to a server directly.
-`PhotoUploader` takes four functions for photos (`api.uploadPhoto`,
+`MediaUploader` takes four functions for photos (`api.uploadPhoto`,
 `api.deleteImage`, `api.reorderImages`, `api.replaceImage` — see `PhotoApi` in
 `src/types.ts`), optionally four more for video (`video.uploadVideo`,
 `video.deleteVideo`, `video.pollVideos`, `video.reorderMedia` — see
@@ -104,7 +104,7 @@ without renumbering anything else. Append new uploads at
 `max(sort_order) + 10` (or `10` if the entity has no images yet).
 
 **`api.reorderImages(entityId, imageIds)` takes the ENTIRE new order, not a
-pairwise swap.** `PhotoUploader` always sends the complete id list in its
+pairwise swap.** `MediaUploader` always sends the complete id list in its
 new order — both drag-and-drop and the keyboard move buttons compute a full
 new array and pass all of it. Implement this server-side as: given the
 ordered id list, assign `sort_order = 10, 20, 30, ...` in that order, in one
@@ -132,7 +132,7 @@ keep serving the PRE-crop bytes forever unless something about the URL
 itself changes.
 
 The fix is to bump `updated_at` on every `replaceImage` call and fold it
-into the URL as a query parameter (`?v=<epoch ms>`). `PhotoUploader` never
+into the URL as a query parameter (`?v=<epoch ms>`). `MediaUploader` never
 does any client-side cache-busting itself — it trusts that
 `api.replaceImage`'s returned `imageUrls` already carry the new `?v=`, and
 re-renders the `<img src>` with that new URL, which the browser treats as a

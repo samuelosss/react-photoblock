@@ -13,7 +13,7 @@ describe('LoadedImage', () => {
     render(<LoadedImage src="/api/admin/images/10?v=1" alt="" data-testid="img" />);
     const img = screen.getByTestId('img');
     expect(img.getAttribute('src')).toBe('/api/admin/images/10?v=1');
-    expect(img.getAttribute('data-pb-image-state')).toBe('ready');
+    expect(img.getAttribute('data-mblock-image-state')).toBe('ready');
   });
 
   it('routes the src through loadImage and renders the resulting object URL', async () => {
@@ -21,7 +21,7 @@ describe('LoadedImage', () => {
     render(<LoadedImage src="/api/admin/images/10?v=1" loadImage={loadImage} alt="" data-testid="img" />);
 
     expect(loadImage).toHaveBeenCalledWith('/api/admin/images/10?v=1');
-    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-pb-image-state')).toBe('ready'));
+    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-mblock-image-state')).toBe('ready'));
     // The vitest setup's createObjectURL fake returns a blob: URL.
     expect(screen.getByTestId('img').getAttribute('src')).toMatch(/^blob:/);
   });
@@ -38,7 +38,7 @@ describe('LoadedImage', () => {
     render(<LoadedImage src="/api/admin/images/10" loadImage={loadImage} alt="" data-testid="img" />);
 
     const img = screen.getByTestId('img');
-    expect(img.getAttribute('data-pb-image-state')).toBe('loading');
+    expect(img.getAttribute('data-mblock-image-state')).toBe('loading');
     // No `src` ATTRIBUTE at all — an <img> with none renders empty, not
     // as the broken-image icon.
     expect(img.hasAttribute('src')).toBe(false);
@@ -69,14 +69,14 @@ describe('LoadedImage', () => {
 
     expect(loadImage).toHaveBeenCalledWith('/public/images/10');
     expect(screen.getByTestId('img').getAttribute('src')).toBe('/public/images/10');
-    expect(screen.getByTestId('img').getAttribute('data-pb-image-state')).toBe('ready');
+    expect(screen.getByTestId('img').getAttribute('data-mblock-image-state')).toBe('ready');
   });
 
   it('renders an <img> with no src — not a broken-image icon — when loadImage rejects', async () => {
     const loadImage = vi.fn(() => Promise.reject(new Error('401')));
     render(<LoadedImage src="/api/admin/images/10" loadImage={loadImage} alt="" data-testid="img" />);
 
-    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-pb-image-state')).toBe('error'));
+    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-mblock-image-state')).toBe('error'));
     expect(screen.getByTestId('img').hasAttribute('src')).toBe(false);
     // Still a real <img>: every selector that reasonably expects an image
     // to be an <img> keeps working.
@@ -88,7 +88,7 @@ describe('LoadedImage', () => {
     const loadImage = vi.fn(() => Promise.resolve(new Blob(['bytes'])));
     const { unmount } = render(<LoadedImage src="/api/admin/images/10" loadImage={loadImage} alt="" data-testid="img" />);
 
-    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-pb-image-state')).toBe('ready'));
+    await waitFor(() => expect(screen.getByTestId('img').getAttribute('data-mblock-image-state')).toBe('ready'));
     const objectUrl = screen.getByTestId('img').getAttribute('src');
     unmount();
     expect(revoke).toHaveBeenCalledWith(objectUrl);

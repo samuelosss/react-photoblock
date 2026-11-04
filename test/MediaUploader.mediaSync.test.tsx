@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { PhotoUploader } from '../src/components/PhotoUploader';
+import { MediaUploader } from '../src/components/MediaUploader';
 import { defaultLabels } from '../src/labels';
 import type { MediaItem, PhotoApi, VideoApi, VideoItem } from '../src/types';
 import {
@@ -56,7 +56,7 @@ function Consumer({
       {/* An unrelated control, so "a pointer drag must not steal focus"
           has somewhere real for focus to already be. */}
       <button type="button">unrelated control</button>
-      <PhotoUploader
+      <MediaUploader
         entityId={entityId}
         imageUrls={state.imageUrls}
         onImageUrlsChange={(imageUrls) => setState((prev) => ({ ...prev, imageUrls }))}
@@ -458,7 +458,7 @@ describe('reorder focus: keyboard may refocus, a pointer drag must not', () => {
    * Both halves of a bug an adversarial review caught in the origin
    * project. JSDOM has no focus-management engine, so it cannot reproduce
    * the real-browser blur this machinery compensates for (that is
-   * e2e/photo-uploader-focus.spec.ts's job) — but it CAN observe whether
+   * e2e/media-uploader-focus.spec.ts's job) — but it CAN observe whether
    * `.focus()` is called, which is the half that went wrong.
    */
   it('refocuses the moved tile after a KEYBOARD move', async () => {
@@ -498,7 +498,7 @@ describe('a consumer that supplies no `media`', () => {
     const clip = makeVideo('5');
     const onMediaChange = vi.fn();
     render(
-      <PhotoUploader
+      <MediaUploader
         entityId="entity-1"
         imageUrls={['/images/10']}
         onImageUrlsChange={vi.fn()}

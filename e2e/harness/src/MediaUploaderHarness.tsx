@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PhotoUploader } from '../../../src/components/PhotoUploader';
+import { MediaUploader } from '../../../src/components/MediaUploader';
 import type { PhotoApi, UploadResult } from '../../../src/types';
 
 /**
@@ -31,19 +31,19 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 const NOT_EXERCISED = () => Promise.reject(new Error('not exercised by this harness'));
 
 /**
- * Playwright-only harness — mounts PhotoUploader standalone with fake
+ * Playwright-only harness — mounts MediaUploader standalone with fake
  * `PhotoApi` implementations, no backend involved. Two modes, selected by
  * `?unsaved=1`:
  *
  *   - DEFAULT (no query param): entityId="1" with five fixed photos,
  *     upload/replace/delete all rejecting — exists for exactly one thing:
- *     the "focus survives a keyboard reorder" spec. PhotoUploader.tsx's
+ *     the "focus survives a keyboard reorder" spec. MediaUploader.tsx's
  *     `pendingFocusRef` comment documents a real-Chromium-only finding
  *     (relocating a focused tile's DOM node via React's `key={url}`
  *     reconciliation does not by itself blur it, but Chromium DOES
  *     auto-blur a focused element the instant it becomes `disabled`, which
  *     the LAST move in a sequence does) — JSDOM implements neither
- *     behaviour, so nothing in test/PhotoUploader.test.tsx can observe it
+ *     behaviour, so nothing in test/MediaUploader.test.tsx can observe it
  *     either way. Five photos so a full sequence of four rightward
  *     keyboard moves (position 1 -> 5) can be driven end to end, including
  *     the last move that disables the just-pressed button.
@@ -54,10 +54,10 @@ const NOT_EXERCISED = () => Promise.reject(new Error('not exercised by this harn
  *     `window.__lastUploadedFile`), and a "Save (test)" button that flips
  *     `entityId` to `"1"` — the same transition a real consumer triggers by
  *     saving the owning entity for the first time, which is what
- *     PhotoUploader's own effect reacts to by uploading everything still
+ *     MediaUploader's own effect reacts to by uploading everything still
  *     queued.
  */
-export function PhotoUploaderHarness() {
+export function MediaUploaderHarness() {
   const params = new URLSearchParams(window.location.search);
   const unsaved = params.get('unsaved') === '1';
 
@@ -90,7 +90,7 @@ export function PhotoUploaderHarness() {
 
   return (
     <div>
-      <PhotoUploader entityId={entityId} imageUrls={urls} onImageUrlsChange={setUrls} api={api} />
+      <MediaUploader entityId={entityId} imageUrls={urls} onImageUrlsChange={setUrls} api={api} />
       {unsaved && (
         <button type="button" onClick={() => setEntityId('1')}>
           Save (test)

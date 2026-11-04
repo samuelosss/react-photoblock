@@ -1,9 +1,9 @@
 {
-  "name": "react-photoblock-example-basic",
+  "name": "react-mediablock-example-basic",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Minimal consumer app: imports the BUILT react-photoblock package, supplies in-memory fakes for the PhotoApi and VideoApi functions including a faked transcode lifecycle, and passes no googlePhotos adapter. Proves the package renders correctly with zero CSS setup and zero Google configuration.",
+  "description": "Minimal consumer app: imports the BUILT react-mediablock package, supplies in-memory fakes for the PhotoApi and VideoApi functions including a faked transcode lifecycle, and passes no googlePhotos adapter. Proves the package renders correctly with zero CSS setup and zero Google configuration.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,7 +13,7 @@
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-photoblock": "file:../.."
+    "react-mediablock": "file:../.."
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",

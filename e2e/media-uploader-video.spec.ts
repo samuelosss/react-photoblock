@@ -8,8 +8,8 @@ import type { Page } from '@playwright/test';
  * box, a painted x-coordinate, or a layout rule. The state-machine half
  * (what gets uploaded, what reaches which callback, what `media` carries)
  * is covered by the JSDOM suite instead — see
- * test/PhotoUploader.video.test.tsx and
- * test/PhotoUploader.mediaSync.test.tsx.
+ * test/MediaUploader.video.test.tsx and
+ * test/MediaUploader.mediaSync.test.tsx.
  */
 
 /** The grid's painted left-to-right order, read from x-coordinates rather
@@ -30,7 +30,7 @@ async function paintedOrder(page: Page): Promise<string[]> {
   return measured.sort((a, b) => a.y - b.y || a.x - b.x).map((item) => item.key);
 }
 
-test.describe('PhotoUploader — a video in the combined grid', () => {
+test.describe('MediaUploader — a video in the combined grid', () => {
   test('a READY video paints BETWEEN the two photos, which `imageUrls` alone cannot express', async ({ page }) => {
     await page.goto('/video-uploader.html');
     await expect(page.locator('[data-media-kind="video"][data-media-id="5"]')).toBeVisible();
@@ -93,7 +93,7 @@ test.describe('PhotoUploader — a video in the combined grid', () => {
  * inversion — so these measure the RATIO, and compare two very different
  * tile sizes against each other.
  */
-test.describe('PhotoUploader — the play affordance is a constant share of its tile', () => {
+test.describe('MediaUploader — the play affordance is a constant share of its tile', () => {
   /** disc width as a fraction of the tile's SHORT side. */
   async function discShare(page: Page, tilePx: number): Promise<number> {
     await page.goto(`/video-uploader.html?tile=${tilePx}`);

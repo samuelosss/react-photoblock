@@ -1,5 +1,5 @@
 /**
- * Every visible string and every aria-label PhotoUploader, PhotoCropEditor
+ * Every visible string and every aria-label MediaUploader, PhotoCropEditor
  * and the Google Photos picker can render, as one typed, overridable
  * structure. Nothing in src/components or src/googlePhotos hardcodes UI
  * text — it all comes from a `labels` prop, defaulted to `defaultLabels`
@@ -10,13 +10,13 @@
 
 import { formatMegabytes } from './formatMedia';
 
-export interface PhotoUploaderLabels {
+export interface MediaUploaderLabels {
   /** Dropzone label while nothing is being dragged over it. */
   dropzoneIdle: string;
   /** Dropzone label while a drag is over it. */
   dropzoneActive: string;
   /** Hint paragraph under the dropzone. `entitySaved` is false before the
-   *  owning entity has ever been saved (see PhotoUploaderProps.entityId) —
+   *  owning entity has ever been saved (see MediaUploaderProps.entityId) —
    *  the default text appends a sentence explaining photos will upload
    *  automatically once it is. */
   hint: (entitySaved: boolean) => string;
@@ -66,7 +66,7 @@ export interface PhotoUploaderLabels {
   cropSaveFailedAlert: string;
 
   // -- Video. Every string below is unreachable unless a `VideoApi` is
-  // injected (see PhotoUploaderProps.video), so a photo-only consumer can
+  // injected (see MediaUploaderProps.video), so a photo-only consumer can
   // ignore this entire block.
 
   /** Video dropzone label while nothing is being dragged over it. */
@@ -123,7 +123,7 @@ export interface PhotoUploaderLabels {
   videoUploadFailed: string;
   /** window.alert() text when a failed row's retry is not possible
    *  because this browser tab no longer holds the original file — see
-   *  PhotoUploader's `uploadedFilesRef`. */
+   *  MediaUploader's `uploadedFilesRef`. */
   videoRetryUnavailable: string;
   /** The dismissible AFTER-transcode note on a ready video tile whose
    *  stored size is over `sizeWarnBytes`. */
@@ -230,8 +230,8 @@ export interface GooglePhotosLabels {
   videoErrors: GooglePhotosVideoErrorLabels;
 }
 
-export interface PhotoBlockLabels {
-  uploader: PhotoUploaderLabels;
+export interface MediaBlockLabels {
+  uploader: MediaUploaderLabels;
   cropEditor: PhotoCropEditorLabels;
   googlePhotos: GooglePhotosLabels;
 }
@@ -240,7 +240,7 @@ const uploaderHintBase =
   'Choose photos from your library, or drag them in. Each photo max 15 MB, up to 10 at a time. ' +
   'Click a photo to edit it (crop, rotate).';
 
-export const defaultLabels: PhotoBlockLabels = {
+export const defaultLabels: MediaBlockLabels = {
   uploader: {
     dropzoneIdle: '+ Add photos, or drag them here',
     dropzoneActive: 'Drop photos here',
@@ -372,7 +372,7 @@ export const defaultLabels: PhotoBlockLabels = {
  * alternative to typing out a full translation. Not the default: this is
  * a general-purpose package, so English is the neutral starting point,
  * and any locale (including this one) is opted into via the `labels`
- * prop, e.g. `<PhotoUploader labels={csLabels} ... />`.
+ * prop, e.g. `<MediaUploader labels={csLabels} ... />`.
  */
 const csUploaderHintBase =
   'Vyberte fotky z knihovny telefonu, nebo je přetáhněte myší. Každá fotka max. 15 MB, ' +
@@ -391,7 +391,7 @@ function csImportedVideosLabel(count: number): string {
   return `${count} videí je nahraných`;
 }
 
-export const csLabels: PhotoBlockLabels = {
+export const csLabels: MediaBlockLabels = {
   uploader: {
     dropzoneIdle: '+ Přidat fotky nebo je sem přetáhnout',
     dropzoneActive: 'Pustit fotky sem',
@@ -551,9 +551,9 @@ function mergeSection<T extends object>(base: T, override?: DeepPartial<T>): T {
  *  full preset passed as `base`), one field deep into each section and
  *  two deep into `googlePhotos.errors`. Every field left unset keeps the
  *  base's value. */
-export function mergeLabels(override?: DeepPartial<PhotoBlockLabels>, base: PhotoBlockLabels = defaultLabels): PhotoBlockLabels {
+export function mergeLabels(override?: DeepPartial<MediaBlockLabels>, base: MediaBlockLabels = defaultLabels): MediaBlockLabels {
   return {
-    uploader: mergeSection<PhotoUploaderLabels>(base.uploader, override?.uploader),
+    uploader: mergeSection<MediaUploaderLabels>(base.uploader, override?.uploader),
     cropEditor: mergeSection<PhotoCropEditorLabels>(base.cropEditor, override?.cropEditor),
     googlePhotos: mergeSection<GooglePhotosLabels>(base.googlePhotos, override?.googlePhotos),
   };

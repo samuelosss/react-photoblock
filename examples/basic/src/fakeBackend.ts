@@ -5,7 +5,7 @@ import type {
   UploadResult,
   VideoApi,
   VideoItem,
-} from 'react-photoblock';
+} from 'react-mediablock';
 
 /**
  * An entirely in-memory, in-browser stand-in for a real backend

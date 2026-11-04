@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { PhotoUploader } from '../src/components/PhotoUploader';
+import { MediaUploader } from '../src/components/MediaUploader';
 import { defaultLabels } from '../src/labels';
 import type { VideoApi } from '../src/types';
 import { fakePhotoApi, fakeVideoApi, makeVideo, makeVideoFile } from './mediaFixtures';
@@ -19,14 +19,14 @@ function renderUploader(props: {
   videos?: ReturnType<typeof makeVideo>[];
   entityId?: string | null;
   durationSeconds?: number | null;
-  videoLimits?: Parameters<typeof PhotoUploader>[0]['videoLimits'];
+  videoLimits?: Parameters<typeof MediaUploader>[0]['videoLimits'];
   onVideosChange?: (videos: ReturnType<typeof makeVideo>[]) => void;
 }) {
   const video = props.video ?? fakeVideoApi();
   const api = fakePhotoApi();
   const onVideosChange = props.onVideosChange ?? vi.fn();
   const view = render(
-    <PhotoUploader
+    <MediaUploader
       entityId={props.entityId === undefined ? 'entity-1' : props.entityId}
       imageUrls={[]}
       onImageUrlsChange={vi.fn()}
@@ -48,9 +48,9 @@ function videoInput(): HTMLInputElement {
   return found;
 }
 
-describe('PhotoUploader — video support is gated on the VideoApi prop', () => {
+describe('MediaUploader — video support is gated on the VideoApi prop', () => {
   it('renders no video dropzone, no accept="video/*" input and no video hint without it', () => {
-    render(<PhotoUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakePhotoApi()} />);
+    render(<MediaUploader entityId="entity-1" imageUrls={[]} onImageUrlsChange={vi.fn()} api={fakePhotoApi()} />);
 
     expect(screen.queryByText(t.videoDropzoneIdle)).not.toBeInTheDocument();
     const inputs = Array.from(document.querySelectorAll('input[type="file"]')) as HTMLInputElement[];
@@ -99,7 +99,7 @@ describe('PhotoUploader — video support is gated on the VideoApi prop', () => 
   });
 });
 
-describe('PhotoUploader — the size-warning gate before a video upload', () => {
+describe('MediaUploader — the size-warning gate before a video upload', () => {
   it('uploads straight away when the estimate is under the warn threshold', async () => {
     const { video } = renderUploader({ durationSeconds: 10 });
 
@@ -167,7 +167,7 @@ describe('PhotoUploader — the size-warning gate before a video upload', () => 
   });
 });
 
-describe('PhotoUploader — client-side video rejections never start an upload', () => {
+describe('MediaUploader — client-side video rejections never start an upload', () => {
   it('rejects a file over maxBytes without calling uploadVideo', async () => {
     const { video } = renderUploader({ videoLimits: { maxBytes: 1024 } });
 
@@ -202,12 +202,12 @@ describe('PhotoUploader — client-side video rejections never start an upload',
   });
 });
 
-describe('PhotoUploader — a video picked before the first save', () => {
+describe('MediaUploader — a video picked before the first save', () => {
   it('queues locally with no upload, then uploads automatically once entityId becomes real', async () => {
     const video = fakeVideoApi();
     const api = fakePhotoApi();
     const { rerender } = render(
-      <PhotoUploader
+      <MediaUploader
         entityId={null}
         imageUrls={[]}
         onImageUrlsChange={vi.fn()}
@@ -227,7 +227,7 @@ describe('PhotoUploader — a video picked before the first save', () => {
 
     await act(async () => {
       rerender(
-        <PhotoUploader
+        <MediaUploader
           entityId="entity-1"
           imageUrls={[]}
           onImageUrlsChange={vi.fn()}
@@ -244,7 +244,7 @@ describe('PhotoUploader — a video picked before the first save', () => {
   });
 });
 
-describe('PhotoUploader — retrying a video that failed AFTER a server row existed', () => {
+describe('MediaUploader — retrying a video that failed AFTER a server row existed', () => {
   it('deletes the failed row and re-uploads when THIS TAB still holds the file', async () => {
     const processing = makeVideo('900', 'processing');
     const video = fakeVideoApi({
@@ -260,7 +260,7 @@ describe('PhotoUploader — retrying a video that failed AFTER a server row exis
     // Upload it first, so uploadedFilesRef holds the File, then rerender
     // with the row having reached 'failed'.
     const { rerender } = render(
-      <PhotoUploader
+      <MediaUploader
         entityId="entity-1"
         imageUrls={[]}
         onImageUrlsChange={vi.fn()}
@@ -278,7 +278,7 @@ describe('PhotoUploader — retrying a video that failed AFTER a server row exis
 
     await act(async () => {
       rerender(
-        <PhotoUploader
+        <MediaUploader
           entityId="entity-1"
           imageUrls={[]}
           onImageUrlsChange={vi.fn()}
@@ -325,7 +325,7 @@ describe('PhotoUploader — retrying a video that failed AFTER a server row exis
   });
 });
 
-describe('PhotoUploader — deleting a video', () => {
+describe('MediaUploader — deleting a video', () => {
   it('confirms first, and does nothing if the confirm is dismissed', async () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
     const { video } = renderUploader({ videos: [makeVideo('5')] });
@@ -356,7 +356,7 @@ describe('PhotoUploader — deleting a video', () => {
   });
 });
 
-describe('PhotoUploader — the after-transcode size warning on a ready tile', () => {
+describe('MediaUploader — the after-transcode size warning on a ready tile', () => {
   it('shows it only for a video over the warn threshold, and lets it be dismissed', async () => {
     const big = makeVideo('5', 'ready', { byteSize: 40 * 1024 * 1024 });
     const small = makeVideo('6', 'ready', { byteSize: 1024 });
@@ -372,7 +372,7 @@ describe('PhotoUploader — the after-transcode size warning on a ready tile', (
   });
 });
 
-describe('PhotoUploader — the status poll', () => {
+describe('MediaUploader — the status poll', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
@@ -384,7 +384,7 @@ describe('PhotoUploader — the status poll', () => {
     const api = fakePhotoApi();
 
     const { rerender } = render(
-      <PhotoUploader
+      <MediaUploader
         entityId="entity-1"
         imageUrls={[]}
         onImageUrlsChange={vi.fn()}
@@ -405,7 +405,7 @@ describe('PhotoUploader — the status poll', () => {
     // applying that callback — the poll must stop.
     await act(async () => {
       rerender(
-        <PhotoUploader
+        <MediaUploader
           entityId="entity-1"
           imageUrls={[]}
           onImageUrlsChange={vi.fn()}
@@ -442,7 +442,7 @@ describe('PhotoUploader — the status poll', () => {
       .mockResolvedValue([makeVideo('5', 'ready')]);
     const onVideosChange = vi.fn();
     render(
-      <PhotoUploader
+      <MediaUploader
         entityId="entity-1"
         imageUrls={[]}
         onImageUrlsChange={vi.fn()}

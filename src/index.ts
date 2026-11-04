@@ -1,5 +1,5 @@
-export { PhotoUploader } from './components/PhotoUploader';
-export type { PhotoUploaderProps } from './components/PhotoUploader';
+export { MediaUploader } from './components/MediaUploader';
+export type { MediaUploaderProps } from './components/MediaUploader';
 
 export { PhotoCropEditor, MAX_OUTPUT_DIMENSION_PX } from './components/PhotoCropEditor';
 export type { PhotoCropEditorProps } from './components/PhotoCropEditor';
@@ -67,9 +67,9 @@ export type {
   GooglePhotosErrorLabels,
   GooglePhotosLabels,
   GooglePhotosVideoErrorLabels,
-  PhotoBlockLabels,
+  MediaBlockLabels,
   PhotoCropEditorLabels,
-  PhotoUploaderLabels,
+  MediaUploaderLabels,
 } from './labels';
 
 export type {

@@ -30,7 +30,7 @@ export interface PhotoCropEditorProps {
    * usual case) — see `LoadImage`'s own doc for the full reasoning,
    * including why a `?token=` query parameter is not the alternative.
    *
-   * Needed here as well as on PhotoUploader because the image being
+   * Needed here as well as on MediaUploader because the image being
    * cropped is either a saved photo (a server URL that may need the
    * header) or a queued one previewed from a local blob. Local previews
    * are never routed through it.

@@ -1,9 +1,9 @@
 # Playwright suite
 
 Runs against `e2e/harness/` — a throwaway, dev-only Vite app (never built,
-never published) that mounts `PhotoCropEditor` and `PhotoUploader`
+never published) that mounts `PhotoCropEditor` and `MediaUploader`
 standalone with in-memory fakes, at `/crop-editor.html`,
-`/photo-uploader.html` and `/video-uploader.html`. Nothing in the package
+`/media-uploader.html` and `/video-uploader.html`. Nothing in the package
 fetches on its own, so no harness needs a backend, auth, or an app shell.
 
 ```sh
@@ -23,12 +23,12 @@ npm run test:e2e
   the corner handles staying hit-testable after that dimming split. This
   is the file that proves what JSDOM structurally cannot — see the
   package README's Limitations section.
-- **`photo-uploader-focus.spec.ts`** (1 test) — a real-Chromium-only
+- **`media-uploader-focus.spec.ts`** (1 test) — a real-Chromium-only
   finding: a keyboard reorder move that disables the just-used button also
-  blurs it, and `PhotoUploader`'s refocus effect has to compensate. JSDOM
+  blurs it, and `MediaUploader`'s refocus effect has to compensate. JSDOM
   has no such focus-management behavior to reproduce, so this is
   Playwright-only.
-- **`photo-uploader-video.spec.ts`** (7 tests) — two claims JSDOM
+- **`media-uploader-video.spec.ts`** (7 tests) — two claims JSDOM
   structurally cannot make.
 
   The first is the grid's **painted** order: "the video sits between the
@@ -59,7 +59,7 @@ The origin project's `photo-uploader-crop-queued.spec.ts` (cropping a
 photo that's queued but not yet uploaded, decoding the resulting bytes to
 confirm the CROPPED pixels — not the original — are what eventually
 uploads) was **not ported** to this package. The underlying behavior is
-covered by `test/PhotoUploader.test.tsx`'s JSDOM suite (the queue/crop
+covered by `test/MediaUploader.test.tsx`'s JSDOM suite (the queue/crop
 state machine is exercised there), but the real-browser, decoded-pixel
 proof for that specific path does not exist here yet. Flagged honestly
 rather than silently dropped — worth adding in a follow-up pass.

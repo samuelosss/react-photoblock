@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
-import { PhotoUploader } from 'react-photoblock';
-import type { MediaItem, VideoItem } from 'react-photoblock';
+import { MediaUploader } from 'react-mediablock';
+import type { MediaItem, VideoItem } from 'react-mediablock';
 import { createFakeBackend } from './fakeBackend';
 
 /**
  * The whole point of this example: import the BUILT package, wire it to
  * pure in-memory fakes (no network, no backend), pass NO `googlePhotos`
- * prop, and render. No CSS file beyond `react-photoblock/styles.css` is
+ * prop, and render. No CSS file beyond `react-mediablock/styles.css` is
  * imported anywhere in this app — every visual token falls back to the
  * package's own built-in defaults. If this looks right, extraction
  * actually worked.
@@ -33,7 +33,7 @@ export function App() {
 
   return (
     <main style={{ maxWidth: 760, margin: '2rem auto', padding: '0 1rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>react-photoblock — basic example</h1>
+      <h1>react-mediablock — basic example</h1>
       <p>
         Pick or drag in a few images and a video below. Uploads, delete, reorder, click-to-crop and the whole video
         transcode lifecycle go through the in-memory fake backend in <code>src/fakeBackend.ts</code> — nothing here
@@ -44,7 +44,7 @@ export function App() {
         the grid as a tile you can drag or arrow into any position among the photos. Every 7th video upload fails on
         purpose, so the failed-row retry UI is reachable.
       </p>
-      <PhotoUploader
+      <MediaUploader
         entityId={entityId}
         imageUrls={imageUrls}
         onImageUrlsChange={setImageUrls}

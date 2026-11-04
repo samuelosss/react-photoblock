@@ -10,7 +10,7 @@ import type { VideoLimits } from './types';
  * and a deployment that overrode one would make the UI quietly disagree
  * with what the server would actually accept. This package cannot repeat
  * that, because it has no server at all to agree with — so the limits are
- * injected (`PhotoUploaderProps.videoLimits`) and these are only the
+ * injected (`MediaUploaderProps.videoLimits`) and these are only the
  * documented starting values.
  *
  * THE SERVER IS THE REAL ENFORCEMENT in every case. Everything here exists

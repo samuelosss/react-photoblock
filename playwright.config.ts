@@ -17,7 +17,7 @@ export default defineConfig({
   webServer: {
     command: 'npx vite dev --config e2e/harness/vite.config.ts',
     // Checked against a real page, not "/" — the harness has no root
-    // index.html (only crop-editor.html/photo-uploader.html), so "/" 404s
+    // index.html (only crop-editor.html/media-uploader.html), so "/" 404s
     // forever and Playwright's readiness poll never sees it come up.
     url: 'http://localhost:4173/crop-editor.html',
     reuseExistingServer: !process.env.CI,

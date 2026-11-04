@@ -47,7 +47,7 @@ const BACKEND_ERROR_CODE_MAP: Record<string, GooglePhotosErrorCode> = {
 
 /** Resolves a GooglePhotosPickerError into display text using the given
  *  labels. Exported so a consumer building a fully custom UI around this
- *  hook (rather than using PhotoUploader's built-in button) doesn't have
+ *  hook (rather than using MediaUploader's built-in button) doesn't have
  *  to reimplement this switch. */
 export function resolveGooglePhotosErrorMessage(error: GooglePhotosPickerError, labels: GooglePhotosLabels): string {
   switch (error.code) {
@@ -136,7 +136,7 @@ export interface UseGooglePhotosPickerOptions {
    * `GooglePhotosAdapter` in src/types.ts and docs/google-photos-setup.md.
    * Omit this (or pass `undefined`) to disable the feature entirely: the
    * hook then does nothing at all — no timers, no listeners, `start()`/
-   * `cancel()` are no-ops, and `enabled` is `false`. PhotoUploader uses
+   * `cancel()` are no-ops, and `enabled` is `false`. MediaUploader uses
    * that flag to skip rendering the picker button altogether, so a
    * consumer with no Google configuration gets no dead control and no
    * console warning, by construction.

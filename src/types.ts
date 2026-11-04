@@ -188,7 +188,7 @@ export interface VideoLimits {
 }
 
 /**
- * The four API operations PhotoUploader needs, injected as props rather
+ * The four API operations MediaUploader needs, injected as props rather
  * than called internally. There is no HTTP client anywhere in this
  * package and never will be — see docs/server-contract.md for what each
  * function's server side must do.
@@ -303,7 +303,7 @@ export interface GooglePhotosAdapter {
    * read — see docs/google-photos-setup.md's failure-modes list for why a
    * retried poll/import must still find it.
    *
-   * `entityId` is whatever `PhotoUploader` holds AT THE MOMENT OF IMPORT,
+   * `entityId` is whatever `MediaUploader` holds AT THE MOMENT OF IMPORT,
    * read fresh rather than captured when the flow started minutes ago. It
    * is `null` before the owning entity's first save. A picked PHOTO never
    * needs it (it comes back as bytes the local upload queue handles), but

@@ -6,7 +6,7 @@ import {
   resolveGooglePhotosVideoErrorMessage,
 } from '../googlePhotos/useGooglePhotosPicker';
 import { mergeLabels } from '../labels';
-import type { DeepPartial, PhotoBlockLabels } from '../labels';
+import type { DeepPartial, MediaBlockLabels } from '../labels';
 import { PhotoCropEditor } from './PhotoCropEditor';
 import { LoadedImage } from './LoadedImage';
 import type { LoadImage } from './LoadedImage';
@@ -30,9 +30,9 @@ import type {
   VideoItem,
   VideoLimits,
 } from '../types';
-import styles from './PhotoUploader.module.css';
+import styles from './MediaUploader.module.css';
 
-export interface PhotoUploaderProps {
+export interface MediaUploaderProps {
   /** Null before the owning entity has ever been saved — see the module doc below. */
   entityId: string | null;
   imageUrls: string[];
@@ -64,7 +64,7 @@ export interface PhotoUploaderProps {
    *  `csLabels` (a Czech preset) is exported if you want that instead of
    *  writing your own. Covers PhotoCropEditor's labels too, since this
    *  component renders it internally for click-to-crop. */
-  labels?: DeepPartial<PhotoBlockLabels>;
+  labels?: DeepPartial<MediaBlockLabels>;
   /**
    * Optional: fetch an image's bytes yourself rather than letting the
    * browser do it — for a thumbnail endpoint that needs a request header
@@ -299,7 +299,7 @@ type CropTarget = { type: 'existing'; url: string; imageId: string } | { type: '
  * mediaTiles.ts's buildMediaTiles for the order/content split and why the
  * merge rule deliberately does NOT live here.
  */
-export function PhotoUploader({
+export function MediaUploader({
   entityId,
   imageUrls,
   onImageUrlsChange,
@@ -315,7 +315,7 @@ export function PhotoUploader({
   onMediaChange,
   videoLimits,
   estimateVideoDurationSeconds = readVideoDurationSeconds,
-}: PhotoUploaderProps) {
+}: MediaUploaderProps) {
   const t = mergeLabels(labels);
   const videoMode = Boolean(video);
   const videoRows = videos ?? [];
@@ -358,7 +358,7 @@ export function PhotoUploader({
   // loss-of-focus failure mode cannot be reproduced or asserted against
   // in a JSDOM test at all — only the effect's own wiring (does it call
   // `.focus()` on the right element) can be. See the README's
-  // Limitations section and e2e/photo-uploader-focus.spec.ts.
+  // Limitations section and e2e/media-uploader-focus.spec.ts.
   const pendingFocusRef = useRef<{ tileKey: string; direction: 'left' | 'right' } | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   // Click-to-crop: which photo (if any) is open in the editor — see

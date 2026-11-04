@@ -1,10 +1,10 @@
 # Basic example
 
 The real test of whether this package's extraction actually worked: a
-minimal app that imports the **built** `react-photoblock` package, wires it
+minimal app that imports the **built** `react-mediablock` package, wires it
 to pure in-memory fakes for the `PhotoApi` and `VideoApi` functions (see
 `src/fakeBackend.ts`), passes no `googlePhotos` adapter, and imports no CSS
-beyond `react-photoblock/styles.css`. If this renders correctly, the
+beyond `react-mediablock/styles.css`. If this renders correctly, the
 package has zero hidden dependencies on its origin application.
 
 `src/fakeBackend.ts` is worth reading even if you never run this app. It is
@@ -25,7 +25,7 @@ place pretending otherwise would actively mislead.
 From this directory:
 
 ```sh
-npm install   # resolves react-photoblock via the file: dependency in package.json,
+npm install   # resolves react-mediablock via the file: dependency in package.json,
               # which points at ../.. — build that package first (npm run build
               # from the repo root) or this will import a stale/missing dist/.
 npm run dev   # http://localhost:5173
@@ -34,7 +34,7 @@ npm run dev   # http://localhost:5173
 ## What to look for
 
 - The dropzone, upload queue, and photo grid all render with the package's
-  **default** visual styling — no `--pb-*` custom properties are defined
+  **default** visual styling — no `--mblock-*` custom properties are defined
   anywhere in this example, so what you see is entirely the fallback
   values baked into the package's own CSS.
 - No "Choose from Google Photos" button — this example passes no
