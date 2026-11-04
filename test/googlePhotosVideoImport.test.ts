@@ -175,11 +175,40 @@ describe('resolveGooglePhotosVideoErrorMessage', () => {
     ).toBe('clip.mov: no code at all');
   });
 
+  /**
+   * THE TABLE IS PINNED AGAINST AN INDEPENDENT LIST, written out here by
+   * hand. Everything else in this file iterates the table's own keys, so
+   * REMOVING a code shrinks what gets iterated and every one of those
+   * assertions passes vacuously — a mutation proved exactly that. Two
+   * lists that must agree, with no test joining them, is the single most
+   * repeated bug shape in this package's origin project.
+   *
+   * If you are adding a code: add it to the table, add its label to both
+   * presets, and add it here. If you are REMOVING one, this failing is
+   * the question being asked, not an obstacle.
+   */
+  it('pins the code table against an independent list, so dropping or renaming one fails', () => {
+    expect(Object.keys(GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS).sort()).toEqual([
+      'video_download_failed',
+      'video_not_ready',
+      'video_processing_failed',
+      'video_queue_full',
+      'video_too_large',
+      'video_too_long',
+    ]);
+  });
+
+  it('leaves no label orphaned — every videoErrors label is reachable from some code', () => {
+    const reachable = new Set(Object.values(GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS));
+    expect([...Object.keys(defaultLabels.googlePhotos.videoErrors)].sort()).toEqual([...reachable].sort());
+  });
+
   it('every mapped code resolves to a real, non-empty label in BOTH shipped presets', () => {
     const codes = Object.keys(GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS);
     // Positive control: a mapping table that had gone empty would make
     // every assertion below vacuous — exactly how a check can pass while
-    // proving nothing.
+    // proving nothing. It is NOT sufficient on its own, though: the
+    // pinned list above is what catches a table that lost ONE code.
     expect(codes.length).toBeGreaterThan(0);
 
     for (const labels of [defaultLabels.googlePhotos, csLabels.googlePhotos]) {

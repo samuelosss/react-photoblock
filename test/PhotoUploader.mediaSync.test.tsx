@@ -278,6 +278,41 @@ describe('media is applied on path 6 of 6: the status poll', () => {
     expect(renderedOrder()).toEqual(['photo:10', 'video:5', 'photo:20']);
     vi.useRealTimers();
   });
+
+  /**
+   * THE CONSEQUENTIAL HALF, and the one a mutation exposed: the
+   * processing->ready test above still passes if the poll stops folding
+   * rows into `media`, because a `media` entry is matched on kind+id and
+   * its stale CONTENT is ignored (content comes from `videos`).
+   *
+   * What actually needs the fold is a row that has gone AWAY — deleted in
+   * another tab, say. Without it, `media` keeps an entry the content lists
+   * no longer have; the grid looks right, because `buildMediaTiles` skips
+   * a row with no tile, but `tilesToMedia` deliberately PRESERVES entries
+   * it finds no tile for (that is how a 'processing' video keeps its
+   * slot), so the next reorder resurrects the dead row as a phantom.
+   */
+  it('drops a video the poll no longer reports, so a later reorder cannot resurrect it', async () => {
+    vi.useFakeTimers();
+    const processing = makeVideo('5', 'processing');
+    const video = fakeVideoApi({ pollVideos: vi.fn(async () => []) });
+    const { state } = setup(
+      {
+        imageUrls: ['/images/10'],
+        videos: [processing],
+        media: [imageMedia('10', 0), videoMedia(processing, 1)],
+      },
+      { video },
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(4000);
+    });
+
+    expect(state().videos).toEqual([]);
+    expect(state().media).toEqual([imageMedia('10', 0)]);
+    vi.useRealTimers();
+  });
 });
 
 describe('the combined reorder', () => {
