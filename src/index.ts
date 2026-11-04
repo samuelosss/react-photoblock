@@ -4,6 +4,34 @@ export type { PhotoUploaderProps } from './components/PhotoUploader';
 export { PhotoCropEditor, MAX_OUTPUT_DIMENSION_PX } from './components/PhotoCropEditor';
 export type { PhotoCropEditorProps } from './components/PhotoCropEditor';
 
+export { LoadedImage, useResolvedImageSrc } from './components/LoadedImage';
+export type { LoadImage } from './components/LoadedImage';
+
+export {
+  buildMediaTiles,
+  extractImageId,
+  mediaItemKey,
+  mediaTileKey,
+  mediaWithout,
+  syncVideosIntoMedia,
+  tilesToMedia,
+  tilesToMediaOrder,
+} from './components/mediaTiles';
+export type { BuildMediaTilesInput, MediaTile } from './components/mediaTiles';
+
+export {
+  DEFAULT_ACCEPTED_VIDEO_MIME_TYPES,
+  DEFAULT_ESTIMATED_BYTES_PER_SECOND,
+  DEFAULT_MAX_VIDEO_BYTES,
+  DEFAULT_MAX_VIDEO_SECONDS,
+  DEFAULT_VIDEO_SIZE_WARN_BYTES,
+  estimateTranscodedBytes,
+  resolveVideoLimits,
+} from './videoLimits';
+export type { ResolvedVideoLimits } from './videoLimits';
+
+export { formatDuration, formatMegabytes } from './formatMedia';
+
 export {
   containBox,
   clampCropRect,
@@ -16,9 +44,15 @@ export {
 } from './components/cropMath';
 export type { Box, Corner, CropPixelRegion, CropRect, Rotation } from './components/cropMath';
 
-export { useGooglePhotosPicker, resolveGooglePhotosErrorMessage } from './googlePhotos/useGooglePhotosPicker';
+export {
+  useGooglePhotosPicker,
+  resolveGooglePhotosErrorMessage,
+  resolveGooglePhotosVideoErrorMessage,
+  GOOGLE_PHOTOS_VIDEO_ERROR_LABEL_KEYS,
+} from './googlePhotos/useGooglePhotosPicker';
 export type {
   GooglePhotosErrorCode,
+  GooglePhotosImportCounts,
   GooglePhotosPickerError,
   GooglePhotosPickerPhase,
   UseGooglePhotosPickerOptions,
@@ -32,6 +66,7 @@ export type {
   DeepPartial,
   GooglePhotosErrorLabels,
   GooglePhotosLabels,
+  GooglePhotosVideoErrorLabels,
   PhotoBlockLabels,
   PhotoCropEditorLabels,
   PhotoUploaderLabels,
@@ -44,7 +79,16 @@ export type {
   GooglePhotosPickedItem,
   GooglePhotosPollResult,
   GooglePhotosStartResult,
+  GooglePhotosVideoImportError,
   ImageUrlsResult,
+  MediaItem,
+  MediaOrderItem,
+  MediaOrderResult,
   PhotoApi,
   UploadResult,
+  VideoApi,
+  VideoItem,
+  VideoLimits,
+  VideoStatus,
+  VideoUploadResult,
 } from './types';

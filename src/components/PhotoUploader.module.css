@@ -19,12 +19,29 @@
   gap: var(--pb-space-2, 8px);
 }
 
+/* One grid item. A column, so the dismissible video size-warning note can
+   sit BELOW the clipped square as normal-flow content and grow the row to
+   fit it — rather than being clipped away by the same `overflow: hidden`
+   that keeps the poster cropped square, or overlapping the poster's own
+   absolutely-positioned badges. */
+.mediaTile {
+  display: flex;
+  flex-direction: column;
+}
+
 .photo {
   position: relative;
   aspect-ratio: 1;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--pb-border, #d8dbe0);
+  /* Makes the tile a SIZE container so `.playBadge svg` can size itself
+     from the tile's own box in `cq` units — see that rule for why a plain
+     width percentage cannot express "a constant share of the tile". Safe
+     to declare here: size containment requires an element whose box does
+     not depend on its contents, and this one's comes entirely from the
+     grid column plus the aspect-ratio above. */
+  container-type: size;
 }
 
 .photo img {
@@ -323,6 +340,114 @@
 .queueEditButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* -- Video tiles ------------------------------------------------------- */
+
+.videoPoster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.playBadge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* So a click on the poster always reaches the controls underneath. */
+  pointer-events: none;
+}
+
+/* THE PROPORTION IS THE THING, not the pixel count.
+ *
+ * The origin project's first attempt at "a disc that scales with its
+ * tile" was `clamp(38px, 26%, 88px)`, and it scaled the WRONG WAY ROUND:
+ * measured in Chromium, the 38px FLOOR bound in an 80px cell (48% of the
+ * tile — the badge visibly swallowed it) while the 88px CEILING bound on a
+ * 1052px hero (8%). Both ends of that clamp were binding, each in the tile
+ * where it did the most damage, so the disc's share of its tile ranged
+ * over roughly 8%-48% while the absolute pixel values looked plausible
+ * everywhere. ABSOLUTE-PIXEL ASSERTIONS ARE EXACTLY HOW THAT PASSED
+ * REVIEW — e2e/photo-uploader-video.spec.ts asserts the RATIO instead, in
+ * two tile sizes, because a test pinned to pixels cannot see an inversion.
+ *
+ * WHY NOT A WIDTH PERCENTAGE. `.playBadge` is `inset: 0`, so `%` on width
+ * is already a share of the tile's WIDTH. That is the same thing only
+ * while the tile is square — which it is in THIS package's own grid, but
+ * `.photo`'s aspect-ratio is a plain CSS rule a consumer can override, and
+ * a disc has to fit the SHORT side. `cqmin` — the shorter side of the
+ * tile's own box, hence `container-type: size` on `.photo` — is one number
+ * that holds in every ratio.
+ *
+ * The plain `clamp()` on the line above is the fallback for a browser with
+ * no container query units (Safari < 16): same shape, width basis. The
+ * floor is a legibility minimum (24% of a 60px cell is a 14px dot) and
+ * nothing else; the ceiling is a backstop for a very wide container. */
+.playBadge svg {
+  width: clamp(20px, 24%, 140px);
+  width: clamp(20px, 24cqmin, 140px);
+  height: auto;
+  /* A poster can be any frame, light or dark. The shadow is what keeps
+     the disc's edge visible against a pale sky. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
+}
+
+.playBadgeDisc {
+  fill: var(--pb-overlay, rgba(17, 17, 17, 0.82));
+  stroke: var(--pb-on-overlay, #ffffff);
+  stroke-width: 1.5;
+}
+
+.playBadgeArrow {
+  fill: var(--pb-on-overlay, #ffffff);
+}
+
+.durationBadge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: var(--pb-overlay, rgba(17, 17, 17, 0.82));
+  color: var(--pb-on-overlay, #ffffff);
+  font-size: var(--pb-font-size-sm, 0.875rem);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+/* The dismissible "this is a big file" note — the AFTER-transcode soft
+   warning, driven by the video's stored `byteSize` (the BEFORE-upload one
+   lives in the video queue panel instead). A normal-flow sibling of the
+   clipped `.photo` square, not a child of it — see `.mediaTile`. */
+.sizeWarning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pb-space-2, 8px);
+  background: var(--pb-surface-alt, #f3f4f6);
+  border: 1px solid var(--pb-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  font-size: var(--pb-font-size-sm, 0.875rem);
+  color: var(--pb-text-muted, #6b7280);
+  margin-top: 0.25rem;
+}
+
+.sizeWarning button {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--pb-border, #d8dbe0);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  color: var(--pb-primary, #2a2a72);
+}
+
+/* One per-item Google Photos video import failure. */
+.googlePhotosVideoErrorItem {
+  margin: 0;
 }
 
 /* Removes a queued (not-yet-uploaded) or failed photo from the list —

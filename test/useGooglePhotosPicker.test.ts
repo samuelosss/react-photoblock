@@ -121,7 +121,10 @@ describe('useGooglePhotosPicker', () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
 
-    expect(importSession).toHaveBeenCalledWith('sess-1');
+    // Second argument: the entityId, read fresh from the hook's ref at
+    // import time. `null` here because this setup supplies none — a
+    // photo-only adapter is free to ignore it.
+    expect(importSession).toHaveBeenCalledWith('sess-1', null);
     expect(onPhotosReady).toHaveBeenCalledTimes(1);
     const files = onPhotosReady.mock.calls[0]![0] as File[];
     expect(files).toHaveLength(1);
@@ -130,7 +133,7 @@ describe('useGooglePhotosPicker', () => {
     expect(firstFile!.name).toBe('a.webp');
     expect(firstFile!.type).toBe('image/webp');
     expect(hook.result.current.phase).toBe('idle');
-    expect(hook.result.current.importedCount).toBe(1);
+    expect(hook.result.current.imported).toEqual({ photos: 1, videos: 0, failedVideos: 0 });
   });
 
   it("treats a Cancel on the OAuth provider's consent screen (oauth_denied) as a silent reset, not an error", async () => {
@@ -316,7 +319,7 @@ describe('useGooglePhotosPicker', () => {
     expect(hook.result.current.phase).toBe('error');
     expect(hook.result.current.error).toEqual({ code: 'importFailed', detail: 'No photos were picked in this session' });
     expect(resolveGooglePhotosErrorMessage(hook.result.current.error!, defaultLabels.googlePhotos)).toBe(
-      'Importing photos failed: No photos were picked in this session',
+      'Importing failed: No photos were picked in this session',
     );
   });
 
@@ -358,12 +361,16 @@ describe('useGooglePhotosPicker', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(1000);
     });
-    expect(hook.result.current.importedCount).toBe(3);
-    expect(defaultLabels.googlePhotos.importedNotice(3)).toBe('3 photos imported — you can close the Google Photos window.');
-    expect(defaultLabels.googlePhotos.importedNotice(1)).toBe('1 photo imported — you can close the Google Photos window.');
+    expect(hook.result.current.imported).toEqual({ photos: 3, videos: 0, failedVideos: 0 });
+    expect(defaultLabels.googlePhotos.importedNotice({ photos: 3, videos: 0, failedVideos: 0 })).toBe(
+      '3 photos imported — you can close the Google Photos window.',
+    );
+    expect(defaultLabels.googlePhotos.importedNotice({ photos: 1, videos: 0, failedVideos: 0 })).toBe(
+      '1 photo imported — you can close the Google Photos window.',
+    );
 
     act(() => hook.result.current.start());
-    expect(hook.result.current.importedCount).toBeNull();
+    expect(hook.result.current.imported).toBeNull();
   });
 
   it('dismissError resets an error back to idle', async () => {
